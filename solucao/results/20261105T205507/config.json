@@ -1,0 +1,50 @@
+{
+  "dataset": "data/modelagem_dcnt_mensal_201001_202512.parquet",
+  "dataset_sha256": "c074b63e8ab972642b956ed0211e5539ebb87adb37339f7e95b9b7ca7f6544e0",
+  "seed": 42,
+  "trials_per_model": 25,
+  "window_starts": [
+    "2020-01",
+    "2015-01",
+    "2010-01"
+  ],
+  "validation_years": [
+    2022,
+    2023,
+    2024
+  ],
+  "development_end": "2024-12",
+  "target": "aih_iniciais",
+  "features": [
+    "grupo_dcnt",
+    "mes_numero",
+    "mes_seno",
+    "mes_cosseno",
+    "indice_temporal",
+    "lag_1",
+    "lag_2",
+    "lag_3",
+    "lag_6",
+    "lag_12",
+    "media_movel_3",
+    "media_movel_6",
+    "media_movel_12",
+    "variacao_anual"
+  ],
+  "models": [
+    "random_forest",
+    "extra_trees",
+    "gradient_boosting",
+    "hist_gradient_boosting",
+    "ridge",
+    "poisson",
+    "elastic_net",
+    "svr_rbf",
+    "mlp"
+  ],
+  "versions": {
+    "python": "3.13.5",
+    "scikit_learn": "1.8.0",
+    "optuna": "4.9.0"
+  }
+}
