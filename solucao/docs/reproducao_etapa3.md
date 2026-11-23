@@ -69,7 +69,7 @@ Uma variação dessa ordem é parecida com a distância entre os primeiros coloc
 ## 5. O que fica em aberto
 
 - Identificar o sistema operacional e o processador da máquina que gerou a entrega.
-- Decidir qual execução é a oficial da Etapa 4: a entregue (`20261105T205507`) ou a reprodutível neste Mac (`20261118T221057`).
+- ~~Decidir qual execução é a oficial da Etapa 4.~~ Decidido em 2026-11-19: a execução entregue `20261105T205507` é a oficial. A `20261118T221057` fica como evidência de reprodução.
 
 ## 6. O que muda na Etapa 4
 
