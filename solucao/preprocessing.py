@@ -44,7 +44,7 @@ def disease_group(icd_code):
     return None
 
 
-def count_admissions(path):
+def count_admissions(path, end=END):
     """Count initial admissions per month and group in one raw file."""
     counts = Counter()
     with tempfile.TemporaryDirectory() as folder:
@@ -55,14 +55,14 @@ def count_admissions(path):
             month = f"{admission[:4]}-{admission[4:6]}"
             group = disease_group(str(row["DIAG_PRINC"]).strip())
             is_initial = str(row["IDENT"]).strip() == "1"  # 5 means a long-stay continuation
-            if is_initial and group and CONTEXT_START <= month <= END:
+            if is_initial and group and CONTEXT_START <= month <= end:
                 counts[month, group] += 1
     return counts
 
 
-def build_features(counts):
+def build_features(counts, end=END):
     """Create one row per month and group, using only earlier months as history."""
-    months = pd.period_range(CONTEXT_START, END, freq="M").astype(str)
+    months = pd.period_range(CONTEXT_START, end, freq="M").astype(str)
     month_numbers = [int(month[5:]) for month in months]
     frames = []
     for group in GROUPS:

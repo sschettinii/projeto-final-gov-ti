@@ -1,6 +1,6 @@
 # Matriz de riscos — previsão mensal de AIHs DCNT
 
-**Versão:** 2.0.0
+**Versão:** 2.1.0
 
 **Data:** 2026-11-19
 
@@ -30,11 +30,11 @@ Os responsáveis são papéis. Na fase acadêmica, todos são exercidos pela equ
 
 | ID | Risco | P | I | Sev. | Controle existente | Ação adicional | Responsável |
 | --- | --- | :-: | :-: | :-: | --- | --- | --- |
-| D1 | Atraso de processamento: meses recentes chegam incompletos e parecem queda de demanda | 3 | 3 | 9 | O dataset usa competências até 2026-07 para internações até 2025-12, com 7 meses de folga | Medir a completude de cada mês antes de usá-lo como entrada (monitoramento) | Responsável pelos dados |
+| D1 | Atraso de processamento: meses recentes chegam incompletos e parecem queda de demanda | 3 | 3 | 9 | O dataset usa competências até 2026-07 para internações até 2025-12; `monitoring.py` exclui meses com completude esperada abaixo de 95% (DA1) | Corrigir os lags imaturos ou deslocar o horizonte antes de operar: no lote de 2026, a previsão sem correção sai de 20% a 36% menor | Responsável pelos dados |
 | D2 | Mudança no layout ou nos códigos do DBC do DATASUS | 2 | 2 | 4 | `preprocessing.py` falha se faltar um campo e confere os totais esperados | Registrar o layout de cada download | Responsável pelos dados |
 | D3 | Código CID inválido dentro de uma faixa DCNT entra na contagem | 2 | 2 | 4 | `quality.py` mede exclusões por motivo; os totais coincidem com a Etapa 2, que validava os códigos | Acompanhar por arquivo a proporção de CIDs fora dos grupos | Responsável pelos dados |
 | D4 | Arquivo bruto corrompido ou substituído sem registro | 1 | 3 | 3 | Os totais conferidos pelo `preprocessing.py` acusam mudança no histórico | Gravar o SHA-256 de cada DBC no download | Responsável pelos dados |
-| D5 | Mudança de distribuição (data drift) nas séries de entrada | 2 | 2 | 4 | Nenhum em operação | Monitorar drift e extrapolação a cada lote | Responsável pelo modelo |
+| D5 | Mudança de distribuição (data drift) nas séries de entrada | 2 | 2 | 4 | `monitoring.py` mede PSI, KS e extrapolação (DA4 a DA6) | Concluir só após 3 ciclos seguidos; no lote de 2026, DA4 e DA6 estão em alerta | Responsável pelo modelo |
 | D6 | Trava de hash acusa mudança falsa: o mesmo conteúdo tem outro SHA-256 em outra máquina, e a execução é bloqueada ou a trava é desligada | 3 | 1 | 3 | `evaluation.py` compara o SHA-256 do arquivo | Comparar o conteúdo quando o hash divergir; registrar a máquina em cada execução | Responsável pelos dados |
 
 ### Modelo
@@ -113,3 +113,4 @@ A matriz deve ser revisada:
 | --- | --- | --- |
 | 1.0.0 | 2026-11-18 | Primeira versão, sobre o pipeline antigo |
 | 2.0.0 | 2026-11-19 | Refeita sobre a pipeline simplificada entregue na Etapa 3 |
+| 2.1.0 | 2026-11-19 | Controles de D1 e D5 atualizados com o primeiro ciclo de monitoramento |
