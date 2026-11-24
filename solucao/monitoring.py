@@ -6,6 +6,11 @@ oficial, depois de conferir o hash da pasta da execução, e mede se os dados no
 chegaram completos, íntegros e parecidos com os antigos, e se o modelo continua
 melhor que o baseline sazonal.
 
+O desempenho é medido com as previsões como teriam sido emitidas: cada mês T é
+previsto só com os arquivos processados até T-1, com os meses recentes corrigidos
+pela curva de completude daquele momento (vintage.py). Assim a avaliação não usa
+informação que ainda não existia quando a previsão seria feita.
+
 Saída: results/monitoring_<última competência>/ com summary.json e tabelas CSV.
 """
 
@@ -17,14 +22,14 @@ from pathlib import Path
 import platform
 
 import joblib
-from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from scipy.stats import ks_2samp
 
 from evaluation import REGISTRY, folder_hash, metrics
-from preprocessing import GROUPS, RAW, build_features, count_admissions
+from preprocessing import GROUPS, build_features
 from tuning import DATASET, FEATURES, RESULTS, TARGET, between, file_hash, macro_wape, predict
+from vintage import count_per_file, issued_forecasts, month_index
 
 OFFICIAL_RUN = RESULTS / "20261105T205507"
 BATCH_START, BATCH_END = "2026-01", "2026-07"
@@ -51,6 +56,10 @@ DRIFT_RATIOS = {
     "razao_lag_1": ("lag_1", "media_movel_12"),
     "variacao_anual": ("variacao_anual", None),
 }
+# Second run of the 2026-07 cycle, after the leakage fix: the first one (monitoring_202607)
+# evaluated forecasts rebuilt with the July files. Both folders are kept for the audit trail.
+REVISION = "v2"
+REPLACES = "monitoring_202607"
 SCENARIOS = {
     "choque_respiratorias": ("respiratorias_selecionadas", "2026-03", BATCH_END, 1.3),
     "falha_carga_diabetes": ("diabetes", "2026-02", "2026-02", 0.0),
@@ -69,10 +78,6 @@ def level(value, limits, lower_is_worse=False):
 def worst(levels):
     order = ["ok", "atencao", "alerta"]
     return max(levels, key=order.index, default="ok")
-
-
-def month_index(month):
-    return int(month[:4]) * 12 + int(month[5:]) - 1
 
 
 def completeness_curve(per_file):
@@ -124,8 +129,11 @@ def drift(reference, current, training):
     return pd.DataFrame(table)
 
 
-def performance(model, rows):
-    predictions = {"mlp": predict(model, rows), "baseline": rows["lag_12"].astype(float)}
+def performance(rows, issued):
+    """Compare the forecasts issued one month ahead with the final value of each month."""
+    issued = rows[["mes_internacao", "grupo_dcnt"]].merge(issued, on=["mes_internacao", "grupo_dcnt"], how="left")
+    assert issued[["mlp", "baseline"]].notna().all(axis=None), "missing issued forecast"
+    predictions = {method: pd.Series(issued[method].to_numpy(), index=rows.index) for method in ("mlp", "baseline")}
     table = []
     for method, predicted in predictions.items():
         table.append({"metodo": method, "grupo": "all", "macro_wape": macro_wape(rows, predicted),
@@ -146,7 +154,7 @@ def performance(model, rows):
     return table, levels, output
 
 
-def monitor(series, mature, reference, training, model):
+def monitor(series, mature, reference, training, issued):
     rows = build_features(series, end=BATCH_END)
     batch = between(rows, BATCH_START, BATCH_END)
     evaluated = batch[batch["mes_internacao"].isin(mature)]
@@ -154,7 +162,7 @@ def monitor(series, mature, reference, training, model):
     quality = {"celulas_zeradas_ou_negativas": zeros, "features_ausentes": int(batch[FEATURES].isna().sum().sum()),
                "nivel": "alerta" if zeros or batch[FEATURES].isna().any(axis=None) else "ok"}
     drift_table = drift(reference, evaluated, training)
-    performance_table, performance_levels, predictions = performance(model, evaluated)
+    performance_table, performance_levels, predictions = performance(evaluated, issued)
     levels = {"qualidade": quality["nivel"],
               **{f"drift_{row.indicador}": row.nivel for row in drift_table.itertuples()},
               **performance_levels}
@@ -177,7 +185,7 @@ def operational_forecast(model, series, completeness):
 
 
 def main():
-    output = RESULTS / f"monitoring_{LAST_FILE.replace('-', '')}"
+    output = RESULTS / f"monitoring_{LAST_FILE.replace('-', '')}_{REVISION}"
     assert not output.exists(), f"{output} already exists"
 
     registry = pd.read_csv(REGISTRY).set_index("run")
@@ -185,11 +193,8 @@ def main():
         "the official run folder changed; the model will not be loaded"
     model = joblib.load(OFFICIAL_RUN / "model.joblib")
 
-    files = sorted(RAW.glob("RDPR*.dbc"))
-    assert len(files) == 212, f"expected 212 raw files, found {len(files)}; run download.py"
-    file_counts = Parallel(n_jobs=-1)(delayed(count_admissions)(path, BATCH_END) for path in files)
-    per_file = [(f"20{path.stem[4:6]}-{path.stem[6:8]}", counts) for path, counts in zip(files, file_counts)]
-    series = sum(file_counts, Counter())
+    per_file = count_per_file(BATCH_END)
+    series = sum((counts for _, counts in per_file), Counter())
 
     curve = completeness_curve(per_file)
     completeness = pd.DataFrame({"mes_internacao": pd.period_range(BATCH_START, BATCH_END, freq="M").astype(str)})
@@ -201,7 +206,9 @@ def main():
 
     official = pd.read_parquet(DATASET)
     reference, training = between(official, *DRIFT_REFERENCE), between(official, *TRAINING)
-    results = {"real_2026": monitor(series, mature, reference, training, model)}
+    curves = {}
+    issued = issued_forecasts(per_file, mature, model, curves=curves)
+    results = {"real_2026": monitor(series, mature, reference, training, issued)}
 
     # Reconciliation: the new batch must not change the months the model was built on.
     rebuilt = between(results["real_2026"]["rows"], "2010-01", "2025-12").reset_index(drop=True)
@@ -211,9 +218,11 @@ def main():
                       "nivel": level(float(difference.max()), RECONCILIATION_LIMITS)}
 
     for name, (group, start, end, factor) in SCENARIOS.items():
-        changed = Counter({key: round(value * factor) if key[1] == group and start <= key[0] <= end else value
-                           for key, value in series.items()})
-        results[name] = monitor(changed, mature, reference, training, model)
+        def change(counts, group=group, start=start, end=end, factor=factor):
+            return Counter({key: round(value * factor) if key[1] == group and start <= key[0] <= end else value
+                            for key, value in counts.items()})
+        scenario_issued = issued_forecasts(per_file, mature, model, transform=change, curves=curves)
+        results[name] = monitor(change(series), mature, reference, training, scenario_issued)
     real_levels = results["real_2026"]["levels"]
     order = ["ok", "atencao", "alerta"]
 
@@ -230,6 +239,9 @@ def main():
         "date_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "official_run": OFFICIAL_RUN.name,
         "official_folder_sha256": registry.loc[OFFICIAL_RUN.name, "folder_sha256"],
+        "revision": REVISION,
+        "replaces": REPLACES,
+        "evaluation": "forecasts issued with files up to T-1, recent months corrected by the completeness curve",
         "dataset_sha256": file_hash(DATASET),
         "batch": {"start": BATCH_START, "end": BATCH_END, "last_file": LAST_FILE, "mature_months": mature},
         "machine": {"system": platform.platform(), "processor": platform.machine(), "python": platform.python_version()},

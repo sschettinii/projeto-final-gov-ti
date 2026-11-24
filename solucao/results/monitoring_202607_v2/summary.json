@@ -1,0 +1,140 @@
+{
+  "date_utc": "2026-11-24T21:13:28+00:00",
+  "official_run": "20261105T205507",
+  "official_folder_sha256": "6d7b2b5c794d9d112f44a837043e45a5b7e48687891131599d96ca92a6f96bb8",
+  "revision": "v2",
+  "replaces": "monitoring_202607",
+  "evaluation": "forecasts issued with files up to T-1, recent months corrected by the completeness curve",
+  "dataset_sha256": "4c529674ac6b5ad35be8957872cbbf505b3f7c260fd313b8a0c052f0e11e9b33",
+  "batch": {
+    "start": "2026-01",
+    "end": "2026-07",
+    "last_file": "2026-07",
+    "mature_months": [
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04"
+    ]
+  },
+  "machine": {
+    "system": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+    "processor": "arm64",
+    "python": "3.13.5"
+  },
+  "limits": {
+    "min_completeness": 0.95,
+    "psi": [
+      0.1,
+      0.25
+    ],
+    "ks_p": [
+      0.05,
+      0.01
+    ],
+    "macro_wape": [
+      7.5,
+      10.0
+    ],
+    "relative_bias": [
+      5.0,
+      10.0
+    ],
+    "extrapolation": [
+      1.0,
+      1.1
+    ],
+    "reconciliation": [
+      0.5,
+      2.0
+    ]
+  },
+  "reconciliation": {
+    "combinacoes": 768,
+    "divergentes": 0,
+    "maior_diferenca_percentual": 0.0,
+    "nivel": "ok"
+  },
+  "operational_forecast_month": "2026-08",
+  "scenarios": {
+    "real_2026": {
+      "overall": "alerta",
+      "quality": {
+        "celulas_zeradas_ou_negativas": [],
+        "features_ausentes": 0,
+        "nivel": "ok"
+      },
+      "levels": {
+        "qualidade": "ok",
+        "drift_razao_sazonal": "alerta",
+        "drift_crescimento_anual": "atencao",
+        "drift_razao_lag_1": "alerta",
+        "drift_variacao_anual": "ok",
+        "drift_extrapolacao_lag_1": "atencao",
+        "drift_extrapolacao_media_movel_12": "alerta",
+        "macro_wape": "atencao",
+        "mlp_contra_baseline": "alerta",
+        "vies_circulatorias": "ok",
+        "vies_diabetes": "alerta",
+        "vies_neoplasias_malignas": "ok",
+        "vies_respiratorias_selecionadas": "atencao"
+      },
+      "worse_than_real": []
+    },
+    "choque_respiratorias": {
+      "overall": "alerta",
+      "quality": {
+        "celulas_zeradas_ou_negativas": [],
+        "features_ausentes": 0,
+        "nivel": "ok"
+      },
+      "levels": {
+        "qualidade": "ok",
+        "drift_razao_sazonal": "alerta",
+        "drift_crescimento_anual": "alerta",
+        "drift_razao_lag_1": "alerta",
+        "drift_variacao_anual": "ok",
+        "drift_extrapolacao_lag_1": "atencao",
+        "drift_extrapolacao_media_movel_12": "alerta",
+        "macro_wape": "atencao",
+        "mlp_contra_baseline": "ok",
+        "vies_circulatorias": "ok",
+        "vies_diabetes": "alerta",
+        "vies_neoplasias_malignas": "ok",
+        "vies_respiratorias_selecionadas": "atencao"
+      },
+      "worse_than_real": [
+        "drift_crescimento_anual"
+      ]
+    },
+    "falha_carga_diabetes": {
+      "overall": "alerta",
+      "quality": {
+        "celulas_zeradas_ou_negativas": [
+          "2026-02/diabetes"
+        ],
+        "features_ausentes": 0,
+        "nivel": "alerta"
+      },
+      "levels": {
+        "qualidade": "alerta",
+        "drift_razao_sazonal": "atencao",
+        "drift_crescimento_anual": "atencao",
+        "drift_razao_lag_1": "alerta",
+        "drift_variacao_anual": "ok",
+        "drift_extrapolacao_lag_1": "atencao",
+        "drift_extrapolacao_media_movel_12": "alerta",
+        "macro_wape": "alerta",
+        "mlp_contra_baseline": "alerta",
+        "vies_circulatorias": "ok",
+        "vies_diabetes": "alerta",
+        "vies_neoplasias_malignas": "ok",
+        "vies_respiratorias_selecionadas": "atencao"
+      },
+      "worse_than_real": [
+        "qualidade",
+        "macro_wape"
+      ]
+    }
+  }
+}

@@ -6,7 +6,7 @@
 
 **Status:** modelo oficial; uso acadêmico e de apoio ao planejamento, sem operação em produção
 
-**Data deste documento:** 2026-11-19
+**Data deste documento:** 2026-11-24
 
 ## 1. Resumo
 
@@ -100,6 +100,27 @@ A MLP reduz o MAE em 52% e a macro-WAPE em 40% em relação ao baseline.
 
 A MLP supera o baseline nos quatro grupos. O viés é negativo em todos eles: o modelo subestima, principalmente no grupo circulatório.
 
+### Teste de 2025 em tempo real, sem vazamento
+
+O teste acima usa as séries consolidadas: para prever um mês, o modelo viu o mês anterior completo, mas no momento da previsão só cerca de metade das AIHs dele teria sido processada. Isso é vazamento de dados futuros e deixa o resultado otimista (risco M7). O `realtime_evaluation.py` refaz o teste prevendo cada mês só com os arquivos processados até o mês anterior, com os meses recentes corrigidos pela curva de completude daquele momento (`vintage.py`), e compara com o valor final.
+
+Fonte: `results/realtime_202607/metrics.csv`.
+
+| Método e entradas | MAE | RMSE | WAPE | Macro-WAPE | Viés médio |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline sazonal | 469,85 | 626,16 | 8,27% | 9,60% | -460,31 |
+| MLP oficial, meses recentes corrigidos pela curva | 268,96 | 332,39 | 4,73% | 7,18% | 59,72 |
+| MLP oficial, meses recentes como chegaram | 1.983,82 | 2.349,05 | 34,91% | 35,19% | -1.983,82 |
+
+| Grupo | MAE | WAPE | WAPE do baseline | Viés relativo |
+| --- | ---: | ---: | ---: | ---: |
+| Circulatórias | 376,63 | 3,55% | 9,49% | -1,37% |
+| Diabetes | 93,11 | 13,43% | 13,05% | -13,43% |
+| Neoplasias malignas | 240,91 | 3,43% | 3,20% | +2,23% |
+| Respiratórias selecionadas | 365,19 | 8,30% | 12,64% | +7,31% |
+
+Este é o erro esperado em operação. A MLP continua melhor que o baseline no total e em circulatórias e respiratórias, mas fica um pouco pior em diabetes e neoplasias. O viés deixa de ser negativo em todos os grupos: subestima diabetes e circulatórias e superestima respiratórias e neoplasias. Sem corrigir os meses recentes, o erro passa de 35%.
+
 ### Variação numérica entre máquinas
 
 O mesmo código, com os mesmos dados e as mesmas versões de bibliotecas, produz modelos diferentes em máquinas diferentes. A MLP com L-BFGS amplifica diferenças de arredondamento da ordem de 10⁻¹⁶ ([reproducao_etapa3.md](reproducao_etapa3.md)).
@@ -119,12 +140,13 @@ Uma análise de backtest de 2018 a 2025 feita com a mesma arquitetura (`docs/ana
 
 ## 6. Limitações
 
-- O teste de 2025 é retrospectivo e usa contagens consolidadas até a competência 2026-07. Em operação, os meses recentes chegam incompletos por causa do atraso de processamento e podem parecer menores do que são.
+- O teste de 2025 do `evaluation.py` usa contagens consolidadas e tem vazamento de dados futuros. O erro esperado em operação é o do teste em tempo real (macro-WAPE de 7,18%), não o de 5,78% (seção 5).
+- O modelo foi escolhido e treinado com entradas completas e é usado com entradas corrigidas pela curva de completude. A correção é uma aproximação, mais ruidosa no mês mais recente.
 - O resultado varia entre máquinas (seção 5). Diferenças de até cerca de 0,8 ponto percentual de macro-WAPE não indicam, sozinhas, mudança nos dados ou no código.
 - São quatro séries mensais correlacionadas, não 768 observações independentes. A incerteza da avaliação é maior do que o número de linhas sugere.
 - O modelo não usa capacidade instalada, ocupação diária, equipes, estoques, população ou políticas locais.
 - O recorte por CID principal não captura todas as internações de pessoas com doença crônica.
-- O erro de diabetes (11,62%) é mais que o dobro do segundo pior grupo (respiratórias, 5,03%).
+- Diabetes tem o maior erro: 11,62% com dados consolidados e 13,43% em tempo real, um pouco pior que o baseline (13,05%).
 - Rupturas abruptas, como a pandemia, aumentam o erro e não são antecipadas pelo modelo.
 - O modelo é estadual. Aplicar a previsão a municípios ou hospitais exige outro modelo e nova avaliação.
 
@@ -152,7 +174,8 @@ Todo uso deve ter revisão humana e considerar fontes que o modelo não conhece.
 | Risco | Efeito | Controle |
 | --- | --- | --- |
 | Subestimação sistemática | Faltam leitos ou insumos planejados | Viés reportado por grupo; margem de segurança decidida por pessoas |
-| Atraso de processamento | Meses recentes parecem queda de demanda | Monitoramento da completude antes de usar o mês |
+| Atraso de processamento | Meses recentes parecem queda de demanda | Monitoramento da completude e correção dos meses recentes pela curva antes de prever |
+| Vazamento de dados futuros na avaliação | O erro medido sai menor que o erro real | Avaliar só previsões feitas com os arquivos disponíveis na época (`realtime_evaluation.py`) |
 | Instabilidade numérica entre máquinas | Retreino muda o modelo e o ranking | Artefato oficial versionado; ambiente registrado em cada execução |
 | Mudança de distribuição | O modelo extrapola fora do padrão aprendido | Monitoramento de drift |
 | Uso fora do escopo | Decisões indevidas sobre pessoas ou hospitais | Usos não recomendados explícitos e revisão humana |
@@ -162,7 +185,7 @@ A avaliação completa está em [matriz_riscos.md](matriz_riscos.md).
 ## 10. Aspectos éticos
 
 - **Privacidade:** a fonte contém dados pessoais sensíveis de saúde. O `preprocessing.py` lê os arquivos brutos e grava só contagens mensais estaduais, com no mínimo 470 AIHs por célula. Nenhum registro individual é salvo pela pipeline, e os arquivos brutos ficam fora do Git.
-- **Justiça entre grupos:** o desempenho é reportado por grupo, e a macro-WAPE impede que o grupo maior esconda o pior. Diabetes, com 11,62% de erro, precisa de atenção específica.
+- **Justiça entre grupos:** o desempenho é reportado por grupo, e a macro-WAPE impede que o grupo maior esconda o pior. Diabetes, com 11,62% de erro com dados consolidados e 13,43% em tempo real, precisa de atenção específica.
 - **Cobertura:** a base representa o SUS. Conclusões não se aplicam diretamente à população atendida apenas pela rede privada.
 - **Autonomia humana:** a previsão é apoio à decisão. Nenhuma alocação ou retirada de recursos deve ser automática.
 - **Transparência:** código, parâmetros, hashes, métricas e previsões de cada execução estão versionados em `results/`, e a variação entre máquinas está documentada.

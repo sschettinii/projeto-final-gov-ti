@@ -129,6 +129,25 @@ O resultado esperado, no total, é:
 
 Esses números devem ser iguais em qualquer máquina, porque o modelo já está treinado.
 
+## Avaliar o modelo oficial em tempo real e monitorar
+
+O teste acima usa os meses anteriores já completos, mas em operação eles ainda estariam chegando, porque o DATASUS demora meses para processar as AIHs. O `realtime_evaluation.py` refaz o teste sem esse vazamento: cada mês é previsto só com os arquivos processados até o mês anterior, com os meses recentes corrigidos pela curva de completude daquele momento, e comparado com o valor final. Ele não retreina nada e confere o hash do modelo oficial antes de carregá-lo. Dentro de `solucao/`:
+
+```bash
+.venv/bin/python realtime_evaluation.py
+.venv/bin/python monitoring.py
+```
+
+Na primeira vez, os dois leem os 212 arquivos brutos (cerca de 3 minutos) e guardam só as contagens mensais de cada competência em `data/contagens_por_competencia.parquet`. Os resultados ficam em `results/realtime_202607/` e `results/monitoring_202607_v2/`. Nenhum dos dois sobrescreve uma pasta existente; para repetir, mova a pasta antes.
+
+O resultado esperado do teste de 2025 em tempo real, na macro-WAPE, é:
+
+| Entradas | MLP oficial | Regra de referência |
+| --- | ---: | ---: |
+| Dados completos (teste original) | 5,78% | 9,60% |
+| Meses recentes como chegaram | 35,19% | 9,60% |
+| Meses recentes corrigidos pela curva | 7,18% | 9,60% |
+
 ## O que esperar ao retreinar em outra máquina
 
 - Os dados se repetem. Se o `preprocessing.py` passar nas verificações, o conteúdo do dataset é o mesmo.

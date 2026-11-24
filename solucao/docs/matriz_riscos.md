@@ -30,7 +30,7 @@ Os responsáveis são papéis. Na fase acadêmica, todos são exercidos pela equ
 
 | ID | Risco | P | I | Sev. | Controle existente | Ação adicional | Responsável |
 | --- | --- | :-: | :-: | :-: | --- | --- | --- |
-| D1 | Atraso de processamento: meses recentes chegam incompletos e parecem queda de demanda | 3 | 3 | 9 | O dataset usa competências até 2026-07 para internações até 2025-12; `monitoring.py` exclui meses com completude esperada abaixo de 95% (DA1) | Corrigir os lags imaturos ou deslocar o horizonte antes de operar: no lote de 2026, a previsão sem correção sai de 20% a 36% menor | Responsável pelos dados |
+| D1 | Atraso de processamento: meses recentes chegam incompletos e parecem queda de demanda | 3 | 3 | 9 | O dataset usa competências até 2026-07 para internações até 2025-12; `monitoring.py` exclui meses com completude esperada abaixo de 95% (DA1) | Corrigir os lags imaturos pela curva de completude antes de prever (`vintage.py`): no lote de 2026, a previsão sem correção sai de 20% a 36% menor, e no teste de 2025 em tempo real o erro passaria de 35% | Responsável pelos dados |
 | D2 | Mudança no layout ou nos códigos do DBC do DATASUS | 2 | 2 | 4 | `preprocessing.py` falha se faltar um campo e confere os totais esperados | Registrar o layout de cada download | Responsável pelos dados |
 | D3 | Código CID inválido dentro de uma faixa DCNT entra na contagem | 2 | 2 | 4 | `quality.py` mede exclusões por motivo; os totais coincidem com a Etapa 2, que validava os códigos | Acompanhar por arquivo a proporção de CIDs fora dos grupos | Responsável pelos dados |
 | D4 | Arquivo bruto corrompido ou substituído sem registro | 1 | 3 | 3 | Os totais conferidos pelo `preprocessing.py` acusam mudança no histórico | Gravar o SHA-256 de cada DBC no download | Responsável pelos dados |
@@ -42,11 +42,12 @@ Os responsáveis são papéis. Na fase acadêmica, todos são exercidos pela equ
 | ID | Risco | P | I | Sev. | Controle existente | Ação adicional | Responsável |
 | --- | --- | :-: | :-: | :-: | --- | --- | --- |
 | M1 | Ruptura abrupta da demanda (nova pandemia, mudança de política) | 1 | 3 | 3 | Efeito da pandemia medido na mesma arquitetura (erro de 4,13% para 10,62%) | Alerta de erro acima do limite; revisão humana durante a ruptura | Responsável pelo modelo |
-| M2 | Subestimação sistemática, principalmente no grupo circulatório (viés de -425,82 AIHs por mês em 2025) | 3 | 2 | 6 | Viés reportado por grupo em `metrics.csv` | Monitorar o viés por grupo; margem de segurança decidida pelo planejamento | Responsável pelo modelo |
+| M2 | Erro sistemático por grupo: com dados consolidados, subestimação nos quatro grupos (circulatórias -425,82 AIHs por mês em 2025); em tempo real, subestima diabetes (-13,43%) e superestima respiratórias (+7,31%) | 3 | 2 | 6 | Viés reportado por grupo em `metrics.csv` | Monitorar o viés por grupo; margem de segurança decidida pelo planejamento | Responsável pelo modelo |
 | M3 | Degradação gradual do desempenho (model drift) | 2 | 2 | 4 | Baseline sazonal calculado em toda avaliação | Retreinar quando a MLP perder para o baseline ou o erro passar do limite | Responsável pelo modelo |
 | M4 | Avaliação otimista: 2025 foi consultado na Etapa 3 e as séries são correlacionadas | 2 | 2 | 4 | Limitação declarada no Model Card | Confirmar com meses de 2026 | Responsável pelo modelo |
 | M5 | Alteração silenciosa do modelo ou dos parâmetros | 1 | 3 | 3 | `config.json` e `best_params.json` por execução; SHA-256 da pasta em `registry.csv`; tag `modelo-v1.0.0` | Registro de versões no MLflow | Responsável pelo modelo |
 | M6 | Instabilidade numérica: o mesmo código gera outro modelo e outro ranking em outra máquina | 3 | 2 | 6 | Artefato oficial versionado; variação medida (macro-WAPE de 5,00% a 5,78%) e declarada no Model Card | Registrar a máquina em `config.json`; não substituir o modelo oficial por retreino sem promoção formal | Responsável pelo modelo |
+| M7 | Vazamento de dados futuros na avaliação: o teste usa meses anteriores já completos, que no momento da previsão ainda estariam chegando, e o erro medido sai menor que o real (5,78% contra 7,18% em 2025) | 2 | 3 | 6 | `realtime_evaluation.py` prevê cada mês só com os arquivos processados até o mês anterior; `monitoring.py` avalia só previsões emitidas desse jeito | Treinar com as entradas como estavam em cada época (`vintage.py`) na próxima versão do modelo | Responsável pelo modelo |
 
 ### Privacidade
 
@@ -79,17 +80,18 @@ Os responsáveis são papéis. Na fase acadêmica, todos são exercidos pela equ
 | Probabilidade \ Impacto | 1 — Baixo | 2 — Médio | 3 — Alto |
 | --- | --- | --- | --- |
 | **3 — Alta** | D6 | M2, M6 | D1 |
-| **2 — Média** | | D2, D3, D5, M3, M4, P3, E3, E4 | E1 |
+| **2 — Média** | | D2, D3, D5, M3, M4, P3, E3, E4 | M7, E1 |
 | **1 — Baixa** | | S1, S2, S4 | D4, M1, M5, P1, P2, S3, E2 |
 
 ## 4. Prioridades
 
-Os quatro riscos de severidade alta orientam o versionamento e o monitoramento:
+Os cinco riscos de severidade alta orientam o versionamento e o monitoramento:
 
 1. **D1 — atraso de processamento:** o risco mais provável em operação, que pode ser confundido com queda real de demanda.
-2. **M2 — subestimação:** o viés negativo aparece nos quatro grupos em 2025.
+2. **M2 — erro sistemático por grupo:** o viés aparece em todos os testes; em tempo real, diabetes é o pior grupo.
 3. **M6 — instabilidade numérica:** já ocorreu entre a apresentação e o pacote da Etapa 3.
-4. **E1 — decisão automática:** o principal risco de uso indevido.
+4. **M7 — vazamento na avaliação:** já ocorreu no teste de 2025 e na primeira versão do ciclo de monitoramento.
+5. **E1 — decisão automática:** o principal risco de uso indevido.
 
 ## 5. Mudanças em relação à versão 1
 
@@ -98,6 +100,7 @@ A versão 1 (`docs/matriz_riscos.md` na raiz) avaliava o pipeline antigo. Na pip
 - P2 caiu de severidade 6 para 3, porque nenhuma base por AIH é produzida e todas as células têm pelo menos 470 AIHs;
 - S1 caiu de 3 para 2, porque só os arquivos públicos do DATASUS ficam guardados localmente;
 - D6 e M6 são novos, identificados na reprodução da entrega;
+- M7 é novo, identificado em 2026-11-24 ao analisar o primeiro ciclo de monitoramento;
 - D2, D3 e D4 passaram a ter como controles os totais conferidos pelo `preprocessing.py` e o `quality.py`, no lugar dos manifestos e da validação CID.
 
 ## 6. Revisão

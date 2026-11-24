@@ -19,6 +19,8 @@ Foram lidos 15,1 milhões de registros de internação de 212 arquivos mensais (
 - o pior grupo é diabetes, com 11,62% de erro, por ter as menores contagens;
 - o modelo tende a subestimar a demanda em todos os grupos, principalmente em circulatórias.
 
+Esse teste, porém, usou os meses anteriores já completos, e na prática eles ainda estariam chegando. Refazendo o teste como ele seria em operação, prevendo cada mês só com os dados disponíveis no mês anterior e corrigindo os meses recentes pela curva de completude, o erro proporcional médio dos grupos fica em 7,18%, ainda bem abaixo dos 9,60% da referência. Nesse cenário o modelo continua melhor em circulatórias e respiratórias, mas fica um pouco pior que a referência em diabetes e neoplasias. Sem a correção dos meses recentes, o erro passaria de 35%.
+
 Entre os benefícios esperados estão a alocação de leitos, equipes e insumos antes dos picos, decisões de alocação apoiadas em dados e suporte à prestação de contas da alta gestão.
 
 Com relação aos dois objetivos estratégicos definidos na Etapa 1, a análise mostrou que os dois foram atendidos em parte:
@@ -29,7 +31,8 @@ Com relação aos dois objetivos estratégicos definidos na Etapa 1, a análise 
 Por fim, ao simular a chegada de dados novos com as internações de 2026, o primeiro ciclo de monitoramento encontrou três pontos que precisam de atenção antes de qualquer uso real:
 
 - os três meses mais recentes chegam incompletos, porque o DATASUS ainda está processando as AIHs, e usá-los sem correção reduziria a previsão em 20% a 36%;
-- no início de 2026, o modelo empatou com a regra de referência e subestimou diabetes em todos os meses;
+- no início de 2026, avaliado como seria em operação, o modelo ficou pior que a regra de referência (7,99% contra 6,32% de erro proporcional médio) e subestimou diabetes em 11,72%;
+- o teste de 2025 original usava informação que ainda não existiria no momento da previsão, e foi refeito sem esse vazamento;
 - o mesmo código gera modelos um pouco diferentes em máquinas diferentes (Debian com Ryzen e macOS com M4).
 
 ## Como a solução será governada?
@@ -51,8 +54,9 @@ Os papéis ficaram definidos assim: a equipe é responsável pelos dados e pelo 
 Para lidar com os riscos encontrados e com o uso da previsão pela gestão, a equipe recomenda que sejam conduzidas as seguintes ações:
 
 - Usar a previsão apenas como apoio ao planejamento, sempre com revisão humana registrada em cada uso;
-- Corrigir os meses incompletos pela curva de completude, ou prever só meses que já estejam completos;
-- Informar o planejamento sobre a subestimação em circulatórias e diabetes e definir uma margem de segurança;
+- Corrigir os meses incompletos pela curva de completude antes de prever, porque sem a correção o erro passa de 35%;
+- Avaliar o modelo só com previsões feitas com os dados disponíveis na época, e esperar um erro próximo de 7%, não de 5,78%;
+- Informar o planejamento sobre a direção do erro de cada grupo (subestima diabetes e circulatórias, superestima respiratórias) e definir uma margem de segurança;
 - Usar sempre o modelo versionado, comparando retreinos apenas na mesma máquina;
 - Retreinar com 2025 incluído (versão 1.1.0) e só trocar de versão se ela for melhor que a referência e que a versão atual;
 - Acompanhar mais três ciclos de monitoramento antes de concluir algo sobre o desempenho em 2026;
@@ -61,8 +65,9 @@ Para lidar com os riscos encontrados e com o uso da previsão pela gestão, a eq
 ## Decisões recentes
 
 - 2026-11-19: a execução entregue na Etapa 3 (`20261105T205507`) foi definida como modelo oficial, mesmo com uma reprodução em outra máquina tendo resultado melhor, para não escolher modelo pelo resultado do teste;
-- 2026-11-19: após o primeiro ciclo de monitoramento, decidiu-se não retreinar ainda, porque há só quatro meses maduros de 2026 e a diferença para a referência está dentro da variação esperada;
-- 2026-11-23: a Diretoria de Contratualização e Regulação da SESA-PR foi proposta como dona do negócio.
+- 2026-11-19: após o primeiro ciclo de monitoramento, decidiu-se não retreinar ainda, porque há só quatro meses maduros de 2026;
+- 2026-11-23: a Diretoria de Contratualização e Regulação da SESA-PR foi proposta como dona do negócio;
+- 2026-11-24: o teste de 2025 e o primeiro ciclo de monitoramento foram refeitos sem vazamento de dados futuros. O modelo oficial não mudou; mudou a forma de medir o erro, que passou a ser de 7,18% em 2025 e 7,99% no início de 2026. A decisão de não retreinar ainda foi mantida, porque a regra do plano pede três ciclos seguidos em alerta.
 
 ## Dados do projeto
 

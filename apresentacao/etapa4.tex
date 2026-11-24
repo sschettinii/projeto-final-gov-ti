@@ -250,7 +250,7 @@
 \end{frame}
 
 \begin{frame}{Gestão de riscos}
-  \framesubtitle{23 riscos de dados, modelo, privacidade, segurança e ética}
+  \framesubtitle{24 riscos de dados, modelo, privacidade, segurança e ética}
   \vfill
   \centering
   \small
@@ -260,8 +260,9 @@
     \textbf{Risco} & \textbf{Descrição} & \textbf{Nota} & \textbf{Resposta} \\
     \midrule
     D1 & Meses recentes chegam incompletos e parecem queda de demanda & \alta~9 & Corrigir pela curva de completude ou prever mês maduro \\
-    M2 & O modelo prevê menos internações do que acontecem: em 2025 errou para baixo nos quatro grupos, mais em circulatórias & \alta~6 & Avisar o planejamento e somar uma margem de segurança; acompanhar o erro de cada grupo \\
+    M2 & O modelo erra sempre para o mesmo lado em alguns grupos: prevê menos diabetes e mais respiratórias & \alta~6 & Avisar o planejamento e somar uma margem de segurança; acompanhar o erro de cada grupo \\
     M6 & O mesmo código gera outro modelo em outra máquina & \alta~6 & Modelo oficial é o arquivo versionado, não um retreino \\
+    M7 & Avaliar com dados que ainda não existiriam na hora da previsão (vazamento) & \alta~6 & Avaliar só previsões feitas com os dados disponíveis na época \\
     E1 & Decisão automática de recursos a partir da previsão & \alta~6 & Revisão humana registrada em cada uso \\
     \bottomrule
   \end{tabular}\par
@@ -351,157 +352,45 @@
 \end{frame}
 
 % ---------------------------------------------------------------------------
-\section{Resultados}
+\section{Resultado}
 
-\begin{frame}{Resultados: teste retrospectivo de 2025}
-  \framesubtitle{Modelo oficial contra a regra do ano anterior}
-  \pgfplotsset{
-    barras/.style={
-      scale only axis,width=0.62\linewidth,xbar,xmin=0,axis lines*=left,
-      axis line style={draw=dcgrey},major tick style={draw=none},xticklabels={},
-      ytick=data,y dir=reverse,tick label style={font=\sffamily\scriptsize,text=black},
-      nodes near coords,nodes near coords style={font=\sffamily\scriptsize,text=black},
-      point meta=x,/pgf/number format/assume math mode=true,/pgf/number format/fixed,
-      /pgf/number format/fixed zerofill,/pgf/number format/precision=2,/pgf/number format/use comma,
-    }
-  }
+\begin{frame}{Resultado da simulação}
+  \framesubtitle{Modelo oficial com as internações de janeiro a julho de 2026}
+  {\color{uelgreen}\small\textbf{Indicadores que dispararam}}\par
+  \vspace{0.1cm}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.25}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrll@{}}
+    \toprule
+    \textbf{Mês} & \textbf{Indicador} & \textbf{Medido} & \textbf{Limite} & \textbf{Nível} \\
+    \midrule
+    Janeiro & Viés em diabetes (ex. 3) & -22,2\% & $\pm$10\% & \alerta \\
+    Fevereiro & MLP contra a regra simples (ex. 2) & 5,60\% & regra: 2,80\% & \alerta \\
+    Abril & Viés em respiratórias (ex. 3) & +9,2\% & $\pm$5\% & \atencao \\
+    Maio a julho & Completude do mês (ex. 1) & 51\% a 91\% & mín. 95\% & \textcolor{nivelatencao}{\textbf{Imaturo}} \\
+    \bottomrule
+  \end{tabular*}\par
+  \vspace{0.02cm}
+  \nota{Previsões feitas só com os dados que existiam na época. Regra simples: repetir o mesmo mês do ano anterior. Sem correção, maio a julho deixariam a previsão de agosto de 20\% a 36\% menor.}
+  \vspace{0.15cm}
   \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.46\textwidth}
+    \begin{column}[T]{0.36\textwidth}
       \vspace{0pt}
-      \small
-      \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrr@{}}
-        \toprule
-        \textbf{Métrica} & \textbf{Baseline} & \textbf{MLP} \\
-        \midrule
-        MAE & 469,81 & \chave{226,22} \\
-        RMSE & 626,15 & \chave{332,61} \\
-        WAPE & 8,27\% & \chave{3,98\%} \\
-        Macro-WAPE & 9,60\% & \chave{5,78\%} \\
-        Viés médio & -460,27 & \chave{-146,89} \\
-        \bottomrule
-      \end{tabular*}\par
-      \vspace{0.15cm}
-      \nota{\textbf{Baseline:} repete o valor do mesmo mês do ano anterior. Erros em AIHs por mês e grupo.}
-    \end{column}
-    \begin{column}[T]{0.50\textwidth}
-      \vspace{0pt}
-      \uncover<2->{
-        {\color{uelgreen}\small\textbf{WAPE por grupo em 2025 (\%)}}\par
-        \vspace{0.05cm}
-        \begin{tikzpicture}
-          \begin{axis}[barras,height=3.6cm,xmax=15.5,bar width=8pt,area legend,
-            enlarge y limits=0.1167,
-            symbolic y coords={Circulatórias,Diabetes,Neoplasias,Respiratórias},
-            legend style={at={(1,0.36)},anchor=east,draw=none,fill=none,font=\sffamily\scriptsize}]
-            \addplot[fill=dcgrey,draw=none] coordinates {
-              (9.49,Circulatórias) (13.05,Diabetes) (3.20,Neoplasias) (12.64,Respiratórias)};
-            \addplot[fill=dcblue,draw=none] coordinates {
-              (4.13,Circulatórias) (11.62,Diabetes) (2.34,Neoplasias) (5.03,Respiratórias)};
-            \legend{Baseline,MLP oficial}
-          \end{axis}
-        \end{tikzpicture}
+      \uncover<3->{
+        {\small A simulação mostrou riscos que o \chave{teste retrospectivo escondia}.}
       }
     \end{column}
-  \end{columns}
-
-\end{frame}
-
-\begin{frame}{Resultados: os dados chegam incompletos}
-  \framesubtitle{Exemplo 1, completude do mês}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.50\textwidth}
-      \vspace{0pt}
-      {\color{uelgreen}\small\textbf{Fração das AIHs já processada}}\par
-      \nota{Coortes de 2023--2024, por meses desde a internação}
-      \begin{tikzpicture}
-        \begin{axis}[
-          scale only axis,width=0.80\linewidth,height=3.1cm,
-          xmin=-0.3,xmax=4.3,ymin=40,ymax=105,
-          xtick={0,1,2,3,4},ytick={50,75,100},
-          axis lines*=left,axis line style={draw=dcgrey},
-          tick label style={font=\sffamily\scriptsize},
-          xlabel={meses depois},xlabel style={font=\sffamily\scriptsize},
-          nodes near coords,nodes near coords style={font=\sffamily\scriptsize,above left,inner sep=1pt},
-          point meta=y,/pgf/number format/fixed,/pgf/number format/precision=1,
-          /pgf/number format/use comma]
-          \addplot[draw=nivelalerta,densely dashed,forget plot,nodes near coords={}] coordinates {(-0.3,95) (4.3,95)};
-          \node[font=\sffamily\scriptsize,text=nivelalerta,anchor=north east] at (axis cs:4.3,94) {95\%};
-          \addplot[dcblue,mark=*,thick] coordinates {(0,50.6) (1,80.4) (2,90.9) (3,99.1) (4,99.9)};
-        \end{axis}
-      \end{tikzpicture}\par
-      \nota{Abaixo de 95\% (linha tracejada), o mês é imaturo: em 2026, maio, junho e julho.}
-    \end{column}
-    \begin{column}[T]{0.46\textwidth}
-      \vspace{0pt}
-      \uncover<2->{
-        {\color{uelgreen}\small\textbf{Previsão de agosto de 2026}}\par
-        \nota{Usando os dados como chegam, contra a correção pela curva}
-        \vspace{0.10cm}
-        \footnotesize
-        \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrr@{}}
-          \toprule
-          \textbf{Grupo} & \textbf{Sem} & \textbf{Com} & \textbf{Dif.} \\
-          \midrule
-          Circulatórias & 8.068 & 11.069 & -27\% \\
-          Diabetes & 460 & 575 & -20\% \\
-          Neoplasias & 4.735 & 7.363 & -36\% \\
-          Respiratórias & 3.743 & 5.708 & -34\% \\
-          \bottomrule
-        \end{tabular*}\par
-        \vspace{0.15cm}
-        {\small Sem correção, a previsão sai \chave{20\% a 36\% menor}: o atraso parece queda de demanda.}
-      }
-    \end{column}
-  \end{columns}
-
-  \vfill
-  \uncover<3->{
-    \nota{\textbf{Integridade:} as 768 combinações de 2010--2025, recalculadas com o lote novo, são idênticas ao dataset oficial. Nenhuma célula zerada nem feature ausente em 2026.}
-  }
-\end{frame}
-
-\begin{frame}{Resultados: desempenho em 2026 e decisão}
-  \framesubtitle{Janeiro a abril, os quatro meses maduros}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.52\textwidth}
-      \vspace{0pt}
-      \footnotesize
-      \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrl@{}}
-        \toprule
-        \textbf{Indicador} & \textbf{MLP} & \textbf{Baseline} & \textbf{Nível} \\
-        \midrule
-        WAPE total & 5,62\% & 6,08\% & \ok \\
-        \chave{Macro-WAPE} (ex. 2) & 6,72\% & 6,32\% & \alerta \\
-        \chave{Viés em diabetes} (ex. 3) & -9,86\% & +1,07\% & \atencao \\
-        Viés em circulatórias & -2,36\% & -4,69\% & \ok \\
-        \bottomrule
-      \end{tabular*}\par
-      \vspace{0.12cm}
-      \nota{O alerta de macro-WAPE é a MLP perdendo para o baseline, não o erro passando de 7,5\%.}
-      \vspace{0.15cm}
-      {\color{uelgreen}\small\textbf{Drift}}\par
-      \footnotesize
-      \begin{itemize}
-        \item 2026 cresceu menos que 2023--2025 (razão sazonal: \alerta)
-        \item Circulatórias 11,6\% acima do maior valor visto no treino
-      \end{itemize}
-    \end{column}
-    \begin{column}[T]{0.44\textwidth}
+    \begin{column}[T]{0.60\textwidth}
       \vspace{0pt}
       \uncover<2->{
         \begin{block}{Decisão registrada}
-          \footnotesize
+          \scriptsize
           \begin{itemize}
-            \item Não usar maio a julho sem correção
-            \item \textbf{Não retreinar ainda:} só 4 meses maduros, e a diferença cabe na variação numérica do modelo
-            \item Preparar a versão 1.1.0, com 2025 no treino
-            \item Avisar o planejamento sobre a subestimação em diabetes
+            \item Corrigir maio a julho pela curva de completude antes de prever
+            \item \textbf{Não retreinar ainda:} o alerta não se repetiu por 3 ciclos seguidos
+            \item Avisar o planejamento: subestima diabetes, superestima respiratórias
           \end{itemize}
         \end{block}
-      }
-      \uncover<3->{
-        \vspace{0.10cm}
-        {\small A simulação mostrou riscos que o \chave{teste retrospectivo escondia}.}
       }
     \end{column}
   \end{columns}
@@ -558,7 +447,7 @@
     \toprule
     \textbf{Objetivo} & \textbf{O que a solução entrega} & \textbf{O que falta} \\
     \midrule
-    Eficiência na alocação de leitos & Previsão mensal por grupo, com metade do erro da regra do ano anterior & Previsão regional e conversão de internações em leitos ocupados (CNES) \\
+    Eficiência na alocação de leitos & Previsão mensal por grupo, com erro menor que a regra do ano anterior & Previsão regional e conversão de internações em leitos ocupados (CNES) \\
     \addlinespace
     Decisões gerenciais com base em dados & Alertas por nível, registro de decisões, Model Card e matriz de riscos & Painel para gestores e uso real da previsão \\
     \bottomrule
@@ -617,6 +506,7 @@
         \item Mais ciclos de monitoramento
         \item Análise por regiões de saúde
         \item Buscar dados fora do escopo desta pesquisa: ocupação, equipes, estoques
+        \item Aplicar técnicas de XAI para explicar as previsões do modelo
       \end{enumerate}
     \end{column}
   \end{columns}
@@ -665,6 +555,153 @@
       \begin{exampleblock}{Consequência}
         O modelo oficial é o arquivo versionado. Retreino e comparação de versões sempre na mesma máquina.
       \end{exampleblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[plain,noframenumbering]{Apoio: teste retrospectivo de 2025}
+  \framesubtitle{Modelo oficial contra a regra do ano anterior}
+  \pgfplotsset{
+    barras/.style={
+      scale only axis,width=0.62\linewidth,xbar,xmin=0,axis lines*=left,
+      axis line style={draw=dcgrey},major tick style={draw=none},xticklabels={},
+      ytick=data,y dir=reverse,tick label style={font=\sffamily\scriptsize,text=black},
+      nodes near coords,nodes near coords style={font=\sffamily\scriptsize,text=black},
+      point meta=x,/pgf/number format/assume math mode=true,/pgf/number format/fixed,
+      /pgf/number format/fixed zerofill,/pgf/number format/precision=2,/pgf/number format/use comma,
+    }
+  }
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}[T]{0.46\textwidth}
+      \vspace{0pt}
+      \small
+      \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrr@{}}
+        \toprule
+        \textbf{Métrica} & \textbf{Baseline} & \textbf{MLP} \\
+        \midrule
+        MAE & 469,81 & \chave{226,22} \\
+        RMSE & 626,15 & \chave{332,61} \\
+        WAPE & 8,27\% & \chave{3,98\%} \\
+        Macro-WAPE & 9,60\% & \chave{5,78\%} \\
+        Viés médio & -460,27 & \chave{-146,89} \\
+        \bottomrule
+      \end{tabular*}\par
+      \vspace{0.15cm}
+      \nota{\textbf{Baseline:} repete o valor do mesmo mês do ano anterior. Erros em AIHs por mês e grupo.}
+      \vspace{0.15cm}
+      {\small\textbf{Sem vazamento:} prevendo cada mês só com os dados que existiam no mês anterior, a macro-WAPE da MLP é \chave{7,18\%} (baseline 9,60\%).}
+    \end{column}
+    \begin{column}[T]{0.50\textwidth}
+      \vspace{0pt}
+      \uncover<2->{
+        {\color{uelgreen}\small\textbf{WAPE por grupo em 2025 (\%)}}\par
+        \vspace{0.05cm}
+        \begin{tikzpicture}
+          \begin{axis}[barras,height=3.6cm,xmax=15.5,bar width=8pt,area legend,
+            enlarge y limits=0.1167,
+            symbolic y coords={Circulatórias,Diabetes,Neoplasias,Respiratórias},
+            legend style={at={(1,0.36)},anchor=east,draw=none,fill=none,font=\sffamily\scriptsize}]
+            \addplot[fill=dcgrey,draw=none] coordinates {
+              (9.49,Circulatórias) (13.05,Diabetes) (3.20,Neoplasias) (12.64,Respiratórias)};
+            \addplot[fill=dcblue,draw=none] coordinates {
+              (4.13,Circulatórias) (11.62,Diabetes) (2.34,Neoplasias) (5.03,Respiratórias)};
+            \legend{Baseline,MLP oficial}
+          \end{axis}
+        \end{tikzpicture}
+      }
+    \end{column}
+  \end{columns}
+
+\end{frame}
+
+\begin{frame}[plain,noframenumbering]{Apoio: os dados chegam incompletos}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}[T]{0.50\textwidth}
+      \vspace{0pt}
+      {\color{uelgreen}\small\textbf{Fração das AIHs já processada}}\par
+      \nota{Coortes de 2023--2024, por meses desde a internação}
+      \begin{tikzpicture}
+        \begin{axis}[
+          scale only axis,width=0.80\linewidth,height=3.1cm,
+          xmin=-0.3,xmax=4.3,ymin=40,ymax=105,
+          xtick={0,1,2,3,4},ytick={50,75,100},
+          axis lines*=left,axis line style={draw=dcgrey},
+          tick label style={font=\sffamily\scriptsize},
+          xlabel={meses depois},xlabel style={font=\sffamily\scriptsize},
+          nodes near coords,nodes near coords style={font=\sffamily\scriptsize,above left,inner sep=1pt},
+          point meta=y,/pgf/number format/fixed,/pgf/number format/precision=1,
+          /pgf/number format/use comma]
+          \addplot[draw=nivelalerta,densely dashed,forget plot,nodes near coords={}] coordinates {(-0.3,95) (4.3,95)};
+          \node[font=\sffamily\scriptsize,text=nivelalerta,anchor=north east] at (axis cs:4.3,94) {95\%};
+          \addplot[dcblue,mark=*,thick] coordinates {(0,50.6) (1,80.4) (2,90.9) (3,99.1) (4,99.9)};
+        \end{axis}
+      \end{tikzpicture}\par
+      \nota{Abaixo de 95\% (linha tracejada), o mês é imaturo: em 2026, maio, junho e julho.}
+    \end{column}
+    \begin{column}[T]{0.46\textwidth}
+      \vspace{0pt}
+      \uncover<2->{
+        {\color{uelgreen}\small\textbf{Previsão de agosto de 2026}}\par
+        \nota{Usando os dados como chegam, contra a correção pela curva}
+        \vspace{0.10cm}
+        \footnotesize
+        \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrr@{}}
+          \toprule
+          \textbf{Grupo} & \textbf{Sem} & \textbf{Com} & \textbf{Dif.} \\
+          \midrule
+          Circulatórias & 8.068 & 11.069 & -27\% \\
+          Diabetes & 460 & 575 & -20\% \\
+          Neoplasias & 4.735 & 7.363 & -36\% \\
+          Respiratórias & 3.743 & 5.708 & -34\% \\
+          \bottomrule
+        \end{tabular*}\par
+        \vspace{0.15cm}
+        {\small Sem correção, a previsão sai \chave{20\% a 36\% menor}: o atraso parece queda de demanda.}
+      }
+    \end{column}
+  \end{columns}
+
+  \vfill
+  \uncover<3->{
+    \nota{\textbf{Integridade:} as 768 combinações de 2010--2025, recalculadas com o lote novo, são idênticas ao dataset oficial. Nenhuma célula zerada nem feature ausente em 2026.}
+  }
+\end{frame}
+
+\begin{frame}[plain,noframenumbering]{Apoio: como funciona a completude do mês}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}[T]{0.46\textwidth}
+      \vspace{0pt}
+      {\color{uelgreen}\small\textbf{Simulação: último arquivo de julho de 2026}}\par
+      \vspace{0.1cm}
+      \footnotesize
+      \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrl@{}}
+        \toprule
+        \textbf{Mês} & \textbf{Meses depois} & \textbf{Esperada} & \textbf{Situação} \\
+        \midrule
+        jan a mar & 6 a 4 & $\approx$100\% & Maduro \\
+        abr & 3 & 99,1\% & Maduro \\
+        mai & 2 & 90,9\% & \textcolor{nivelatencao}{Imaturo} \\
+        jun & 1 & 80,4\% & \textcolor{nivelatencao}{Imaturo} \\
+        jul & 0 & 50,6\% & \textcolor{nivelatencao}{Imaturo} \\
+        \bottomrule
+      \end{tabular*}\par
+      \vspace{0.1cm}
+      \nota{Completude esperada: fração das AIHs que já deveria ter chegado, lida na curva de meses que já estavam completos. É uma estimativa, não uma medição.}
+    \end{column}
+    \begin{column}[T]{0.50\textwidth}
+      \vspace{0pt}
+      {\color{uelgreen}\small\textbf{Dois usos do mesmo número}}\par
+      \footnotesize
+      \begin{enumerate}
+        \setlength{\itemsep}{3pt}
+        \item \textbf{Filtro da avaliação:} só meses com pelo menos 95\% entram no cálculo do erro (jan a abr). Maio a julho entram nos próximos ciclos.
+        \item \textbf{Correção da previsão:} para prever agosto, julho é dividido por 0,506, junho por 0,804 e maio por 0,909.
+      \end{enumerate}
+      \vspace{0.1cm}
+      \begin{alertblock}{Limitação}
+        \footnotesize
+        O indicador depende só do tempo: os três últimos meses são sempre imaturos. Se o DATASUS atrasar mais que o normal, a correção fica baixa sem aviso. Para virar alarme, comparar a fração que chegou com a esperada.
+      \end{alertblock}
     \end{column}
   \end{columns}
 \end{frame}

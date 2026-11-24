@@ -17,3 +17,9 @@ Os parâmetros de cada tentativa da busca ficam em `trials.csv`, e o melhor de c
 ## Resultados
 
 As métricas de teste de cada execução ficam em `metrics.csv`, e o resumo de todas as execuções em `registry.csv`, que é o ponto de partida para comparar experimentos.
+
+## Avaliação em tempo real e monitoramento
+
+O `metrics.csv` de cada execução mede o teste de 2025 com os meses anteriores já completos, o que usa informação que ainda não existiria no momento da previsão. Por isso o modelo oficial também é avaliado pelo `realtime_evaluation.py`, que prevê cada mês só com os arquivos processados até o mês anterior. O resultado fica em `results/realtime_202607/`, com as previsões e as métricas de cada forma de montar as entradas.
+
+Os ciclos de monitoramento ficam em `results/monitoring_<competência>/`. O primeiro ciclo foi rodado duas vezes, e as duas pastas ficam guardadas: `monitoring_202607` avaliava previsões refeitas com os arquivos de julho, e `monitoring_202607_v2` avalia as previsões como teriam sido emitidas em cada mês.

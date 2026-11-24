@@ -16,7 +16,7 @@ O maior risco do projeto está aqui. Uma internação pode levar meses para ser 
 
 | ID | Risco | P | I | Sev. | Controle | Responsável |
 | --- | --- | :-: | :-: | :-: | --- | --- |
-| D1 | Meses recentes chegam incompletos e parecem queda de demanda | 3 | 3 | 9 | O monitoramento mede a completude e tira da avaliação os meses abaixo de 95%; antes de operar, corrigir esses meses ou prever um mês já completo | Dados |
+| D1 | Meses recentes chegam incompletos e parecem queda de demanda | 3 | 3 | 9 | O monitoramento mede a completude e tira da avaliação os meses abaixo de 95%; antes de prever, os meses recentes são corrigidos pela curva de completude (sem a correção, o erro em 2025 passaria de 35%) | Dados |
 | D2 | O DATASUS muda o layout ou os códigos dos arquivos | 2 | 2 | 4 | O `preprocessing.py` para se faltar um campo ou se os totais não baterem | Dados |
 | D3 | Um código CID inválido dentro de uma faixa DCNT entra na contagem | 2 | 2 | 4 | O `quality.py` mede as exclusões por motivo, e o total bate com o da Etapa 2, que validava os códigos | Dados |
 | D4 | Arquivo bruto corrompido ou substituído sem ninguém perceber | 1 | 3 | 3 | Os totais conferidos pelo `preprocessing.py` acusam mudança no histórico | Dados |
@@ -25,15 +25,16 @@ O maior risco do projeto está aqui. Uma internação pode levar meses para ser 
 
 ## Modelo
 
-No modelo, os riscos altos são dois. O primeiro é a subestimação: em 2025 o modelo errou para baixo nos quatro grupos, e no grupo circulatório faltaram em média 426 internações por mês na previsão. O segundo é que a MLP muda de uma máquina para outra: o mesmo código deu macro-WAPE de 5,78% numa máquina e 5,00% em outra.
+No modelo, os riscos altos são três. O primeiro é o erro sistemático: com os dados consolidados de 2025 o modelo errou para baixo nos quatro grupos, e prevendo como seria em operação ele subestima diabetes em 13,43% e superestima respiratórias em 7,31%. O segundo é que a MLP muda de uma máquina para outra: o mesmo código deu macro-WAPE de 5,78% numa máquina e 5,00% em outra. O terceiro é medir o erro com informação que não existiria na hora da previsão. Foi o que aconteceu no nosso teste de 2025: ele usava os meses anteriores já completos e deu 5,78%, mas refeito como seria em operação o erro é de 7,18%.
 
 | ID | Risco | P | I | Sev. | Controle | Responsável |
 | --- | --- | :-: | :-: | :-: | --- | --- |
 | M1 | Ruptura brusca da demanda (uma nova pandemia) | 1 | 3 | 3 | O efeito da pandemia foi medido (erro de 4,13% para 10,62%); alerta de erro e revisão humana durante a ruptura | Modelo |
-| M2 | O modelo subestima a demanda de forma sistemática | 3 | 2 | 6 | Viés reportado por grupo e monitorado a cada ciclo; margem de segurança decidida pelo planejamento | Modelo |
+| M2 | O modelo erra sempre para o mesmo lado em um grupo (subestima diabetes e circulatórias, superestima respiratórias) | 3 | 2 | 6 | Viés reportado por grupo e monitorado a cada ciclo; margem de segurança decidida pelo planejamento | Modelo |
 | M3 | O desempenho piora aos poucos (model drift) | 2 | 2 | 4 | A baseline é computada em toda avaliação; retreinar quando o modelo perder para ela | Modelo |
 | M4 | O modelo ou os parâmetros mudam sem registro | 1 | 3 | 3 | Cada execução grava sua configuração, o hash da pasta fica no `registry.csv` e o modelo em uso tem tag no Git | Modelo |
 | M5 | O mesmo código gera outro modelo em outra máquina | 3 | 2 | 6 | O modelo oficial é o arquivo versionado, não um novo treino; retreinos são comparados na mesma máquina | Modelo |
+| M6 | A avaliação usa dados que ainda não existiriam no momento da previsão (vazamento), e o erro medido sai menor que o real | 2 | 3 | 6 | O `realtime_evaluation.py` prevê cada mês só com os arquivos processados até o mês anterior; o monitoramento avalia só previsões feitas desse jeito | Modelo |
 
 ## Privacidade
 
@@ -63,7 +64,7 @@ O principal risco ético é a previsão virar decisão automática, por exemplo 
 | --- | --- | :-: | :-: | :-: | --- | --- |
 | E1 | Recursos decididos automaticamente com base na previsão | 2 | 3 | 6 | Uso proibido no Model Card; exigir registro de revisão humana em cada uso | Dono do negócio |
 | E2 | Usar a previsão para ranquear ou punir hospitais e municípios | 1 | 3 | 3 | O modelo é só estadual, e esse uso é proibido no Model Card | Dono do negócio |
-| E3 | O grupo com pior desempenho recebe um planejamento pior (diabetes, 11,62% de erro) | 2 | 2 | 4 | Métricas por grupo, macro-WAPE como critério de escolha e monitoramento do erro por grupo | Modelo |
+| E3 | O grupo com pior desempenho recebe um planejamento pior (diabetes, 13,43% de erro em tempo real) | 2 | 2 | 4 | Métricas por grupo, macro-WAPE como critério de escolha e monitoramento do erro por grupo | Modelo |
 | E4 | Tratar a previsão do SUS como se valesse para toda a população | 2 | 2 | 4 | Cobertura declarada no Model Card e no dataset documentado, e avisada sempre que os resultados forem apresentados | Equipe |
 
 ## Mapa de calor
@@ -71,5 +72,5 @@ O principal risco ético é a previsão virar decisão automática, por exemplo 
 | Probabilidade \ Impacto | 1 — Baixo | 2 — Médio | 3 — Alto |
 | --- | --- | --- | --- |
 | **3 — Alta** | D6 | M2, M5 | D1 |
-| **2 — Média** | | D2, D3, D5, M3, P3, E3, E4 | E1 |
+| **2 — Média** | | D2, D3, D5, M3, P3, E3, E4 | M6, E1 |
 | **1 — Baixa** | | S1, S3 | D4, M1, M4, P1, P2, S2, E2 |

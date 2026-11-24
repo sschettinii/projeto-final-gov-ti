@@ -31,6 +31,9 @@ model-index:
           - type: mae
             name: MAE no teste de 2025
             value: 226.22
+          - type: macro-wape
+            name: Macro-WAPE no teste de 2025 em tempo real (sem dados futuros)
+            value: 7.18
 ---
 
 # Model Card do previsao-aih-dcnt-mlp
@@ -102,12 +105,12 @@ Os usuários previstos são os gestores regionais de saúde da SESA-PR e os dire
 
 ### Limitações
 
-- O teste de 2025 é retrospectivo e usa contagens já consolidadas. Em operação, os meses recentes chegam incompletos por causa do atraso de processamento do DATASUS e parecem menores do que são.
+- O teste de 2025 original usa contagens já consolidadas, o que é um vazamento de dados: para prever um mês, o modelo viu o mês anterior completo, mas na época só metade das AIHs dele teria chegado. Refeito como seria em operação, com os meses recentes corrigidos pela curva de completude, a macro-WAPE sobe de 5,78% para 7,18% (seção Results). Sem essa correção, o erro passa de 35%.
 - O resultado varia entre máquinas. A mesma configuração deu macro-WAPE de 5,78% na máquina da entrega e até 5,00% em outro computador. O desempenho deve ser lido como uma faixa de cerca de 5% a 6%.
 - São quatro séries mensais correlacionadas, não 768 observações independentes, então a incerteza da avaliação é maior do que o número de linhas sugere.
 - O modelo não sabe nada sobre capacidade instalada, ocupação diária, equipes, estoques, população ou políticas locais.
 - O recorte por CID principal não pega todas as internações de pessoas com doença crônica.
-- O erro de diabetes (11,62%) é mais que o dobro do segundo pior grupo (respiratórias, 5,03%).
+- O erro de diabetes é o maior dos quatro grupos: 11,62% com dados consolidados e 13,43% em tempo real, um pouco pior que a regra de referência (13,05%).
 - Rupturas bruscas, como a pandemia, aumentam o erro e não são antecipadas pelo modelo.
 - O modelo é estadual. Aplicar a previsão a municípios ou hospitais exige outro modelo.
 
@@ -116,7 +119,8 @@ Os usuários previstos são os gestores regionais de saúde da SESA-PR e os dire
 | Risco | Efeito | Controle |
 | --- | --- | --- |
 | Subestimação sistemática | Faltam leitos ou insumos planejados | Viés reportado por grupo; margem de segurança decidida por pessoas |
-| Atraso de processamento | Meses recentes parecem queda de demanda | Monitorar a completude antes de usar o mês |
+| Atraso de processamento | Meses recentes parecem queda de demanda | Monitorar a completude e corrigir os meses recentes pela curva antes de prever |
+| Vazamento de dados futuros na avaliação | O erro medido sai menor do que o erro real | Avaliar só previsões feitas com os arquivos disponíveis na época (`realtime_evaluation.py`) |
 | Instabilidade numérica entre máquinas | Um retreino muda o modelo e o ranking | Modelo oficial guardado como arquivo versionado |
 | Mudança de distribuição | O modelo extrapola fora do padrão aprendido | Monitoramento de drift |
 | Uso fora do escopo | Decisões indevidas sobre pessoas ou hospitais | Usos proibidos explícitos e revisão humana |
@@ -134,8 +138,9 @@ A lista completa, com 23 riscos de dados, modelo, privacidade, segurança e éti
 ### Recommendations
 
 - Toda previsão usada no planejamento deve ter revisão humana registrada.
-- Avisar o planejamento de que o modelo subestima, principalmente em circulatórias e diabetes, e definir uma margem de segurança.
+- Avisar o planejamento da direção do erro de cada grupo (em tempo real, subestima diabetes e circulatórias e superestima respiratórias) e definir uma margem de segurança.
 - Não usar os três meses mais recentes sem corrigir a incompletude.
+- Esperar um erro próximo do teste em tempo real (macro-WAPE de 7,18% em 2025), não dos 5,78% do teste com dados consolidados.
 - Usar sempre o modelo versionado (`results/20261105T205507/model.joblib`) e comparar retreinos só na mesma máquina.
 - Só trocar de versão se a nova for melhor que a regra de referência e que a versão atual, com aprovação do dono do negócio.
 
@@ -232,7 +237,9 @@ Métricas de classificação (accuracy, precision, recall, F1, AUC) não se apli
 
 ### Results
 
-Fonte: `results/20261105T205507/metrics.csv`.
+Há dois resultados para 2025. O primeiro é o teste original, com as contagens já consolidadas. Ele mede o modelo quando as entradas estão completas e é otimista, porque usa informação que não existiria no momento da previsão. O segundo é o teste em tempo real, em que cada mês é previsto só com os arquivos processados até o mês anterior, com os meses recentes corrigidos pela curva de completude daquele momento, e comparado com o valor final. É o erro esperado em operação.
+
+**Teste com dados consolidados.** Fonte: `results/20261105T205507/metrics.csv`.
 
 | Método | MAE | RMSE | WAPE | Macro-WAPE | Viés médio |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -246,9 +253,28 @@ Fonte: `results/20261105T205507/metrics.csv`.
 | Neoplasias malignas | 163,96 | 201,62 | 2,34% | 3,20% | -40,25 |
 | Respiratórias selecionadas | 221,15 | 303,76 | 5,03% | 12,64% | -91,35 |
 
+**Teste em tempo real.** Fonte: `results/realtime_202607/metrics.csv` (entradas `com_correcao`).
+
+| Método | MAE | RMSE | WAPE | Macro-WAPE | Viés médio |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Regra de referência | 469,85 | 626,16 | 8,27% | 9,60% | -460,31 |
+| MLP oficial | 268,96 | 332,39 | 4,73% | 7,18% | 59,72 |
+| MLP oficial, sem corrigir os meses recentes | 1.983,82 | 2.349,05 | 34,91% | 35,19% | -1.983,82 |
+
+| Grupo | MAE | RMSE | WAPE | WAPE da referência | Viés médio |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Circulatórias | 376,63 | 431,31 | 3,55% | 9,49% | -145,95 |
+| Diabetes | 93,11 | 111,83 | 13,43% | 13,05% | -93,11 |
+| Neoplasias malignas | 240,91 | 283,89 | 3,43% | 3,20% | 156,49 |
+| Respiratórias selecionadas | 365,19 | 403,47 | 8,30% | 12,64% | 321,47 |
+
+A regra de referência quase não muda, porque ela usa o mesmo mês do ano anterior, que já está completo quando a previsão é feita.
+
 #### Summary
 
-A MLP reduz o erro médio em 52% e a macro-WAPE em 40% em relação à regra de referência, e é melhor nos quatro grupos. O viés é negativo em todos eles: o modelo subestima, principalmente em circulatórias. Diabetes é o grupo com maior erro proporcional.
+Com dados consolidados, a MLP reduz o erro médio em 52% e a macro-WAPE em 40% em relação à regra de referência, é melhor nos quatro grupos e subestima em todos eles, principalmente em circulatórias.
+
+Em tempo real, que é como o modelo seria usado, a vantagem diminui mas continua: macro-WAPE de 7,18% contra 9,60%, e erro médio 43% menor. A MLP continua bem melhor em circulatórias e respiratórias, mas fica um pouco pior que a referência em diabetes e neoplasias. O viés muda de direção conforme o grupo: subestima diabetes (-13,43%) e circulatórias, e superestima respiratórias (+7,31%) e neoplasias. Corrigir os meses recentes é obrigatório: sem a correção, o erro passa de 35%.
 
 ## Model Examination
 

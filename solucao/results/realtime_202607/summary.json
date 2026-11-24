@@ -1,0 +1,48 @@
+{
+  "date_utc": "2026-11-24T21:13:16+00:00",
+  "official_run": "20261105T205507",
+  "official_folder_sha256": "6d7b2b5c794d9d112f44a837043e45a5b7e48687891131599d96ca92a6f96bb8",
+  "last_file": "2026-07",
+  "evaluated_months": {
+    "teste_2025": [
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12"
+    ],
+    "monitoramento_2026": [
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04"
+    ]
+  },
+  "rule": "forecast for month T uses only files processed up to T-1; truth is the final value",
+  "machine": {
+    "system": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+    "processor": "arm64",
+    "python": "3.13.5"
+  },
+  "macro_wape": {
+    "teste_2025/dados_completos/mlp": 5.7807,
+    "teste_2025/dados_completos/baseline": 9.5954,
+    "teste_2025/sem_correcao/mlp": 35.1873,
+    "teste_2025/sem_correcao/baseline": 9.596,
+    "teste_2025/com_correcao/mlp": 7.1769,
+    "teste_2025/com_correcao/baseline": 9.596,
+    "monitoramento_2026/dados_completos/mlp": 6.7202,
+    "monitoramento_2026/dados_completos/baseline": 6.3203,
+    "monitoramento_2026/sem_correcao/mlp": 37.7946,
+    "monitoramento_2026/sem_correcao/baseline": 6.3224,
+    "monitoramento_2026/com_correcao/mlp": 7.9873,
+    "monitoramento_2026/com_correcao/baseline": 6.3224
+  }
+}
