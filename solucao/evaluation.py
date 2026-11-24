@@ -16,7 +16,7 @@ import sys
 import joblib
 import pandas as pd
 
-from tuning import DATASET, DEVELOPMENT_END, RESULTS, TARGET, between, file_hash, macro_wape, predict, train
+from tuning import DATASET, DEVELOPMENT_END, RESULTS, TARGET, between, content_hash, file_hash, macro_wape, predict, train
 
 TEST_START, TEST_END = "2025-01", "2025-12"
 REGISTRY = RESULTS / "registry.csv"
@@ -51,11 +51,15 @@ def folder_hash(folder):
 
 
 def main():
-    run = Path(sys.argv[1]) if len(sys.argv) > 1 else max(path for path in RESULTS.iterdir() if path.is_dir())
+    runs = [path for path in RESULTS.iterdir() if path.is_dir() and path.name[:8].isdigit()]  # skip monitoring_*
+    run = Path(sys.argv[1]) if len(sys.argv) > 1 else max(runs)
     assert not (run / "metrics.csv").exists(), f"{run} was already evaluated"
 
     config = json.loads((run / "config.json").read_text())
-    assert file_hash(DATASET) == config["dataset_sha256"], "the dataset changed after tuning"
+    if file_hash(DATASET) != config["dataset_sha256"]:
+        # Same values can be written with different bytes on another machine; compare the content then.
+        assert content_hash(DATASET) == config.get("dataset_content_sha256"), "the dataset changed after tuning"
+        print("Dataset file hash differs, but its content is the same as in tuning.")
 
     best = json.loads((run / "best_params.json").read_text())
     winner = min(best, key=lambda item: item["validation_macro_wape"])

@@ -11,6 +11,7 @@ from pathlib import Path
 import platform
 import warnings
 
+import numpy as np
 import optuna
 import pandas as pd
 import sklearn
@@ -158,6 +159,12 @@ def file_hash(path):
     return sha256(path.read_bytes()).hexdigest()
 
 
+def content_hash(path):
+    """Hash of the values only. The file bytes also carry writer metadata and can differ between machines."""
+    values = pd.util.hash_pandas_object(pd.read_parquet(path), index=False).to_numpy()
+    return sha256(values.tobytes()).hexdigest()
+
+
 def tune(name, development):
     folds = [
         (development[development["mes_internacao"] < f"{year}-01"],
@@ -209,6 +216,7 @@ def main():
     config = {
         "dataset": str(DATASET),
         "dataset_sha256": file_hash(DATASET),
+        "dataset_content_sha256": content_hash(DATASET),
         "seed": SEED,
         "trials_per_model": TRIALS_PER_MODEL,
         "window_starts": WINDOW_STARTS,
@@ -221,7 +229,11 @@ def main():
             "python": platform.python_version(),
             "scikit_learn": sklearn.__version__,
             "optuna": optuna.__version__,
+            "numpy": np.__version__,
+            "pandas": pd.__version__,
         },
+        # The MLP amplifies rounding differences between machines, so the machine is part of the result.
+        "machine": {"system": platform.platform(), "processor": platform.machine()},
     }
     (run / "config.json").write_text(json.dumps(config, indent=2) + "\n")
     (run / "best_params.json").write_text(json.dumps(best, indent=2) + "\n")
