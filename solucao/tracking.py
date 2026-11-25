@@ -36,6 +36,19 @@ MODEL_NAME = "previsao-aih-dcnt-mlp"
 MODEL_VERSION_TAG = "1.0.0"  # git tag modelo-v1.0.0
 RUN_IDS = RESULTS / "mlflow_runs.csv"
 
+# Máquinas das execuções anteriores ao registro automático em config.json.
+DECLARED_MACHINES = {
+    "20261105T205507": {"sistema": "Debian Linux", "processador": "AMD Ryzen 7 série 4000",
+                        "fonte": "declarado pela equipe em 2026-11-23"},
+    "20261118T221057": {"sistema": "macOS", "processador": "Apple M4",
+                        "fonte": "máquina da reprodução de 2026-11-18"},
+}
+
+
+def machine_tag(folder, config):
+    machine = config.get("machine") or DECLARED_MACHINES.get(folder.name, "não registrada na execução")
+    return json.dumps(machine, ensure_ascii=False)
+
 
 def experiment_id(name):
     found = mlflow.get_experiment_by_name(name)
@@ -73,7 +86,7 @@ def log_run(folder, registry_row, experiment):
             "data_avaliacao_utc": registry_row["date_utc"],
             "pasta_sha256": registry_row["folder_sha256"],
             "dataset_sha256": config["dataset_sha256"],
-            "maquina": json.dumps(config.get("machine", "não registrada na execução")),
+            "maquina": machine_tag(folder, config),
         })
         mlflow.log_params({
             "modelo": winner["model"],
@@ -142,6 +155,8 @@ def log_monitoring(folder, experiment, model_version):
             "execucao_oficial": summary["official_run"],
             "nivel_geral": summary["scenarios"]["real_2026"]["overall"],
             **{f"nivel_{key}": value for key, value in levels.items()},
+            **({"revisao": summary["revision"], "substitui": summary["replaces"],
+                "avaliacao": summary["evaluation"]} if "revision" in summary else {}),
         })
         mlflow.log_params({"lote_inicio": summary["batch"]["start"], "lote_fim": summary["batch"]["end"],
                            "ultima_competencia": summary["batch"]["last_file"],
@@ -168,6 +183,24 @@ def log_monitoring(folder, experiment, model_version):
     return run.info.run_id
 
 
+def log_realtime(folder, experiment, model_version):
+    """Error of the official model with forecasts issued one month ahead, without future data."""
+    summary = json.loads((folder / "summary.json").read_text())
+    with mlflow.start_run(experiment_id=experiment, run_name=folder.name) as run:
+        mlflow.set_tags({"pasta": folder.name, "tipo": "avaliacao_tempo_real",
+                         "modelo": f"{MODEL_NAME} v{model_version}", "execucao_oficial": summary["official_run"],
+                         "regra": summary["rule"]})
+        mlflow.log_params({"ultima_competencia": summary["last_file"],
+                           **{f"meses_{period}": ",".join(months)
+                              for period, months in summary["evaluated_months"].items()}})
+        mlflow.log_metrics({f"macro_wape_{key.replace('/', '_')}": value for key, value in summary["macro_wape"].items()})
+        mlflow.log_artifacts(str(folder), artifact_path="tempo_real")
+    MlflowClient().set_model_version_tag(
+        MODEL_NAME, model_version, "teste_2025_tempo_real_macro_wape",
+        f"{summary['macro_wape']['teste_2025/com_correcao/mlp']:.2f}")
+    return run.info.run_id
+
+
 def main():
     mlflow.set_tracking_uri(TRACKING_URI)
     experiment = experiment_id(EXPERIMENT)
@@ -182,6 +215,8 @@ def main():
             run_id, model_uri = log_run(folder, registry.loc[folder.name], experiment)
         else:
             model_uri = f"runs:/{run_id}/modelo"
+            config = json.loads((folder / "config.json").read_text())
+            MlflowClient().set_tag(run_id, "maquina", machine_tag(folder, config))
         rows.append({"tipo": "execucao", "pasta": folder.name, "run_id": run_id})
         if folder.name == OFFICIAL_RUN.name:
             version = register_official(model_uri, run_id)
@@ -190,6 +225,9 @@ def main():
     for folder in sorted(RESULTS.glob("monitoring_*")):
         run_id = already_logged(monitoring, folder.name) or log_monitoring(folder, monitoring, version)
         rows.append({"tipo": "monitoramento", "pasta": folder.name, "run_id": run_id})
+    for folder in sorted(RESULTS.glob("realtime_*")):
+        run_id = already_logged(monitoring, folder.name) or log_realtime(folder, monitoring, version)
+        rows.append({"tipo": "tempo_real", "pasta": folder.name, "run_id": run_id})
 
     pd.DataFrame(rows).to_csv(RUN_IDS, index=False)
     print(pd.DataFrame(rows).to_string(index=False))

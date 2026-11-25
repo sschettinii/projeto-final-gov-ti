@@ -2,3 +2,5 @@ tipo,pasta,run_id
 execucao,20261105T205507,3a12f898b8984c7abd8ea8f235780b07
 execucao,20261118T221057,0d30e9f307d54c48a7081644eab9de01
 monitoramento,monitoring_202607,c28ed8c080394d31bcb5e3c14c1563d7
+monitoramento,monitoring_202607_v2,4d17c6146b724c74bf4146385e21e5e9
+tempo_real,realtime_202607,b4b1846e3ad248d8b1d40575b67afb07
