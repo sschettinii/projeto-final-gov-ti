@@ -1,8 +1,8 @@
 # Dataset Documentado
 
-O dataset usado no treino e na avaliação é `data/modelagem_dcnt_mensal_201001_202512.parquet`. Ele não é baixado pronto: é montado a partir dos arquivos brutos do DATASUS em dois passos, dentro de `solucao/`:
+O dataset usado no treino e na avaliação é `data/modelagem_dcnt_mensal_201001_202512.parquet`. Montado a partir dos arquivos brutos do DATASUS em dois passos, dentro de `solucao/`:
 
-1. `python download.py` baixa os arquivos mensais do Paraná. Arquivos já baixados não são baixados de novo, então basta rodar outra vez se um download falhar.
+1. `python download.py` baixa os arquivos mensais do Paraná.
 2. `python preprocessing.py` lê os arquivos brutos, conta as internações e calcula as features.
 
 ## Data Dictionary
@@ -22,7 +22,7 @@ Uma linha por mês de internação e grupo. 768 linhas (192 meses × 4 grupos), 
 | media_movel_3, media_movel_6, media_movel_12 | real | Média das AIHs dos 3, 6 e 12 meses anteriores, sem incluir o mês previsto |
 | variacao_anual | real | (lag_1 − AIHs de 13 meses antes) ÷ AIHs de 13 meses antes |
 
-Todas as features usam só meses anteriores ao mês previsto, então nenhuma delas carrega informação do alvo. Totais por grupo nos meses-alvo:
+Todas as features usam só meses anteriores ao mês previsto. Totais por grupo nos meses-alvo:
 
 | Grupo | AIHs | Média mensal | Mínimo | Máximo |
 | --- | ---: | ---: | ---: | ---: |

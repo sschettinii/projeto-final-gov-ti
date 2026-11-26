@@ -191,21 +191,38 @@
 \end{frame}
 
 \begin{frame}{Rastreabilidade com MLflow}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.57\textwidth}
-      \vspace{0pt}
-      \includegraphics[width=\linewidth]{img/mlflow_paginas.png}
+  \framesubtitle{1. Experiments}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.62\textwidth}
+      \includegraphics[width=\linewidth]{img/mlflow_1_experiments.png}
     \end{column}
-    \begin{column}[T]{0.40\textwidth}
-      \vspace{0pt}
-      \scriptsize
-      \begin{enumerate}
-        \setlength{\itemsep}{4pt}
-        \item \textbf{Experiments:} cada linha é uma pergunta. \texttt{previsao-aih-dcnt} guarda a escolha do modelo; \texttt{monitoramento-modelo-oficial}, os ciclos com dados novos.
-        \item \textbf{Training runs:} cada linha é uma execução da pipeline (a oficial e a reprodução). Dentro de cada uma, 27 runs filhos: o melhor de cada modelo em cada janela.
-        \item \textbf{Run:} o que gerou o modelo. Parâmetros do vencedor, métricas de validação e de teste, máquina, SHA-256 dos dados, commit do código e os arquivos da execução.
-        \item \textbf{Model registry:} só o modelo aprovado para uso. A \textbf{Version 1} tem o apelido \texttt{@champion} e as tags da versão, da tag Git, da execução de origem e do último monitoramento.
-      \end{enumerate}
+    \begin{column}{0.35\textwidth}
+      \small
+      \setlength{\leftmargini}{0.9em}
+      \begin{itemize}
+        \setlength{\itemsep}{6pt}
+        \item Cada linha é um experimento
+        \item Benchmark: escolha do modelo\newline {\footnotesize\texttt{previsao-aih-dcnt}}
+        \item Simulação 2026\newline {\footnotesize\texttt{monitoramento-modelo-oficial}}
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Rastreabilidade com MLflow}
+  \framesubtitle{2. Training runs}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.62\textwidth}
+      \includegraphics[width=\linewidth]{img/mlflow_2_runs.png}
+    \end{column}
+    \begin{column}{0.35\textwidth}
+      \small
+      \setlength{\leftmargini}{0.9em}
+      \begin{itemize}
+        \setlength{\itemsep}{6pt}
+        \item Cada linha é uma execução da pipeline: a oficial e a reprodução
+        \item Dentro de cada uma, 27 runs filhos: o melhor de cada modelo em cada janela
+      \end{itemize}
     \end{column}
   \end{columns}
 \end{frame}
@@ -241,8 +258,8 @@
           \setlength{\itemsep}{4pt}
           \item \textbf{Model Card:} objetivo, dados, métricas por grupo, limitações, usos, riscos, aspectos éticos e responsáveis
           \item \textbf{Dataset documentado:} dicionário das 16 colunas, origem no SIH/SUS, transformações e qualidade dos registros
-          \item \textbf{Privacidade:} registra quais campos dos dados brutos são lidos e que só totais estaduais são gravados
-          \item \textbf{Cobertura:} deixa claro a quem o modelo se aplica: internações do SUS no Paraná, não pessoas nem leitos ocupados
+          \item \textbf{Privacidade:} só 3 campos dos dados brutos são lidos e só totais do estado são gravados
+          \item \textbf{Cobertura:} prevê internações do SUS no Paraná; não mede ocupação de leitos nem atendimentos privados
         \end{itemize}
       }
     \end{column}
@@ -264,9 +281,9 @@
     \toprule
     \textbf{Risco} & \textbf{Descrição} & \textbf{Nota} & \textbf{Resposta} \\
     \midrule
-    D1 & Meses recentes chegam incompletos e parecem queda de demanda & \alta~9 & Corrigir pela curva de completude ou prever mês maduro \\
-    M7 & Avaliar com dados que ainda não existiriam na hora da previsão (vazamento) & \alta~6 & Avaliar só previsões feitas com os dados disponíveis na época \\
+    D2 & O DATASUS muda o layout ou os códigos dos arquivos & \textcolor{nivelatencao}{\textbf{Média}}~4 & A pipeline para se faltar um campo ou o total não bater \\
     E1 & Decisão automática de recursos a partir da previsão & \alta~6 & Revisão humana registrada em cada uso \\
+    M2 & O modelo erra sempre para o mesmo lado em um grupo (subestima diabetes) & \alta~6 & Avisar o planejamento e acompanhar o erro de cada grupo \\
     \bottomrule
   \end{tabular}\par
   \vspace{0.25cm}
@@ -298,8 +315,8 @@
       \begin{itemize}
         \setlength{\itemsep}{3pt}
         \item \textbf{Dados novos:} internações de janeiro a julho de 2026, publicadas depois do treino e nunca vistas pelo modelo
-        \item \textbf{Um ciclo} do \texttt{monitoring.py} com o modelo oficial (v1.0.0), como se ele já estivesse em uso
-        \item \textbf{Teste dos alarmes:} um surto e uma falha de carga forçados para ver se os indicadores reagem
+        \item \texttt{monitoring.py} com o modelo oficial (v1.0.0), como se ele já estivesse em uso
+        \item \textbf{Monitoramento dos alarmes:} para ver como os indicadores reagiriam
       \end{itemize}
     \end{block}
   }
@@ -321,7 +338,7 @@
     \toprule
     \textbf{Grupo} & \textbf{Indicador} & \textbf{Limite} & \textbf{Ação} \\
     \midrule
-    Dados & Completude do mês & Estimativa de pelo menos 95\% das AIHs já processadas & Fica fora do cálculo do desempenho e é corrigido antes de prever \\
+    Dados & Meses zerados ou vazios & Qualquer ocorrência é \alerta & Conferir o download e reprocessar o mês \\
     Dados & Valores fora do que o modelo viu no treino & 10\% acima do maior valor do treino é \alerta & Avaliar retreino \\
     Modelo & MLP contra a regra simples & MLP pior que o baseline é \alerta & Três ciclos seguidos disparam a avaliação de retreino \\
     \bottomrule
@@ -362,15 +379,16 @@
   \vspace{0.1cm}
   \footnotesize
   \renewcommand{\arraystretch}{1.15}
-  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrll@{}}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.10\textwidth}>{\raggedright\arraybackslash}p{0.30\textwidth}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.25\textwidth}>{\raggedright\arraybackslash}p{0.08\textwidth}@{}}
     \toprule
-    \textbf{Mês} & \textbf{Indicador} & \textbf{Medido} & \textbf{Limite} & \textbf{Nível} \\
+    \textbf{Mês} & \textbf{Indicador} & \textbf{Medido} & \textbf{Limite} & \textbf{Sinal} \\
     \midrule
     Janeiro & Meses zerados ou vazios & 0 & qualquer um é alerta & \ok \\
-    Fevereiro & MLP contra a regra simples & MLP 5,60\%; regra 2,80\% & alerta: $E_{\text{MLP}} > E_{\text{baseline}}$ & \alerta \\
-    Março & Erro médio do modelo (macro-WAPE) & 9,33\% & atenção: 7,5\%; alerta: 10\% & \atencao \\
+    Fevereiro & MLP contra a regra simples & MLP 5,60\% \newline regra 2,80\% & alerta: $E_{\text{MLP}} > E_{\text{baseline}}$ & \alerta \\
+    Março & Erro médio do modelo & 9,33\% & atenção: 7,5\%; alerta: 10\% & \atencao \\
     \bottomrule
-  \end{tabular*}\par
+  \end{tabular}\par
   \vspace{0.12cm}
   {\color{uelgreen}\small\textbf{Do alerta à ação}}\par
   \vspace{0.05cm}
@@ -409,14 +427,14 @@
       \setbeamercolor{block body}{fg=uelblack,bg=dcbluetint}
       {\color{dcblue}\large\textbf{Técnicos}}\par
       \vspace{0.2cm}
-      \begin{block}{O modelo muda de um computador para outro}
+      \begin{block}{Modelo diferente em cada máquina}
         \begin{minipage}[t][1.45cm][t]{\linewidth}\raggedright
         Com o mesmo código e os mesmos dados, a busca escolheu hiperparâmetros diferentes.
         \solucao{modelo protegido por hash; retreinos são feitos e comparados na mesma máquina.}
         \end{minipage}
       \end{block}
       \vspace{0.3cm}
-      \begin{block}{Hash de bytes contra hash de conteúdo}
+      \begin{block}{Mesmos dados, hash diferente}
         \begin{minipage}[t][1.45cm][t]{\linewidth}\raggedright
         O mesmo dataset tem outro SHA-256 em outra máquina e bloqueava a avaliação.
         \solucao{se o hash diverge, comparamos o conteúdo dos dados.}
@@ -427,17 +445,17 @@
       \vspace{0pt}
       {\color{uelgreen}\large\textbf{Metodológicos}}\par
       \vspace{0.2cm}
-      \begin{block}{Limites sem histórico de operação}
+      \begin{block}{Definir os limites de alerta}
         \begin{minipage}[t][1.45cm][t]{\linewidth}\raggedright
         Não havia uso real para saber quanto erro é aceitável.
         \solucao{atenção em 7,5\%, acima da variação entre máquinas; alerta em 10\%, perto do erro na pandemia.}
         \end{minipage}
       \end{block}
       \vspace{0.3cm}
-      \begin{block}{Rupturas como a pandemia}
+      \begin{block}{Mudanças bruscas na demanda}
         \begin{minipage}[t][1.45cm][t]{\linewidth}\raggedright
         Na pandemia o erro da MLP subiu de 4,13\% para 10,62\%.
-        \solucao{alerta calibrado nesse erro (10\%) e revisão humana reforçada.}
+        \solucao{notificação de alerta e revisão humana reforçada.}
         \end{minipage}
       \end{block}
     \end{column}
@@ -462,19 +480,16 @@
 \end{frame}
 
 \begin{frame}{Como foram aplicados os conceitos estudados na disciplina}
-  \scriptsize
-  \renewcommand{\arraystretch}{1.22}
-  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.36\textwidth}>{\raggedright\arraybackslash}p{0.60\textwidth}@{}}
+  \small
+  \renewcommand{\arraystretch}{1.6}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.30\textwidth}>{\raggedright\arraybackslash}p{0.66\textwidth}@{}}
     \toprule
     \textbf{Conteúdo da disciplina} & \textbf{Como foi aplicado no projeto} \\
     \midrule
-    Governança corporativa & Alta gestão aprova o uso; Model Card com usos permitidos e proibidos \\
     Estratégia e alinhamento & O negócio define o objetivo; a TI entrega a previsão e mede o atendimento \\
     Quem decide o quê & Negócio aprova a troca de versão; TI decide arquitetura e ferramentas \\
-    ISO 38500 & Avaliar na simulação, dirigir com regras de uso, monitorar com 19 indicadores \\
-    Gestão de TI & Mudança só com aprovação; integridade por hash e dados fora do Git \\
-    Governança de dados: metadados e linhagem & Dicionário, origem e linhagem no MLflow; a Diretoria de Regulação como \textit{data owner} \\
-    Qualidade de dados (ISO 25012) & Completude, validade e consistência medidas \\
+    Governança de dados & Dicionário, origem e linhagem no MLflow \\
+    Qualidade de dados & Completude, validade e consistência medidas \\
     Cultura \textit{data-driven} e IA responsável & Previsão só como apoio, com revisão humana \\
     DataOps e MLOps & Pipeline versionado, Model Registry e monitoramento de \textit{drift} \\
     \bottomrule
@@ -525,217 +540,5 @@
 \end{frame}
 
 \obrigado[Perguntas?]
-
-% ---------------------------------------------------------------------------
-% Slides de apoio: fora da numeração principal.
-\begin{frame}[plain,noframenumbering]{Apoio: por que o modelo muda entre máquinas}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.55\textwidth}
-      \vspace{0pt}
-      \footnotesize
-      \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrr@{}}
-        \toprule
-        \textbf{Execução} & \textbf{$\alpha$} & \textbf{WAPE} & \textbf{Macro} \\
-        \midrule
-        Entregue (oficial) & 1,46 & 3,98\% & 5,78\% \\
-        Retreino da entregue neste Mac & 1,46 & 4,15\% & 5,72\% \\
-        Busca refeita neste Mac & 0,71 & 3,70\% & 5,00\% \\
-        \bottomrule
-      \end{tabular*}\par
-      \vspace{0.25cm}
-      \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lr@{}}
-        \toprule
-        \textbf{Treino com $\alpha = 1{,}46$} & \textbf{Macro-WAPE} \\
-        \midrule
-        Dados originais & 5,72\% \\
-        \texttt{mes\_seno} $+$ 1 ulp ($\approx 10^{-16}$) & 5,35\% \\
-        \texttt{media\_movel\_3} $+$ 1 ulp & 5,56\% \\
-        \bottomrule
-      \end{tabular*}
-    \end{column}
-    \begin{column}[T]{0.40\textwidth}
-      \vspace{0pt}
-      \footnotesize
-      \begin{itemize}
-        \item O Optuna sorteia valores que diferem na 16ª casa entre máquinas
-        \item A MLP com L-BFGS amplifica essa diferença
-        \item A busca refeita aqui coincide em 664 de 675 trials com a do pipeline antigo
-        \item O conteúdo do dataset é idêntico nas três máquinas; só os bytes do arquivo mudam
-      \end{itemize}
-      \vspace{0.15cm}
-      \begin{exampleblock}{Consequência}
-        O modelo oficial é o arquivo versionado. Retreino e comparação de versões sempre na mesma máquina.
-      \end{exampleblock}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}[plain,noframenumbering]{Apoio: teste retrospectivo de 2025}
-  \framesubtitle{Modelo oficial contra a regra do ano anterior}
-  \pgfplotsset{
-    barras/.style={
-      scale only axis,width=0.62\linewidth,xbar,xmin=0,axis lines*=left,
-      axis line style={draw=dcgrey},major tick style={draw=none},xticklabels={},
-      ytick=data,y dir=reverse,tick label style={font=\sffamily\scriptsize,text=black},
-      nodes near coords,nodes near coords style={font=\sffamily\scriptsize,text=black},
-      point meta=x,/pgf/number format/assume math mode=true,/pgf/number format/fixed,
-      /pgf/number format/fixed zerofill,/pgf/number format/precision=2,/pgf/number format/use comma,
-    }
-  }
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.46\textwidth}
-      \vspace{0pt}
-      \small
-      \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrr@{}}
-        \toprule
-        \textbf{Métrica} & \textbf{Baseline} & \textbf{MLP} \\
-        \midrule
-        MAE & 469,81 & \chave{226,22} \\
-        RMSE & 626,15 & \chave{332,61} \\
-        WAPE & 8,27\% & \chave{3,98\%} \\
-        Macro-WAPE & 9,60\% & \chave{5,78\%} \\
-        Viés médio & -460,27 & \chave{-146,89} \\
-        \bottomrule
-      \end{tabular*}\par
-      \vspace{0.15cm}
-      \nota{\textbf{Baseline:} repete o valor do mesmo mês do ano anterior. Erros em AIHs por mês e grupo.}
-      \vspace{0.15cm}
-      {\small\textbf{Sem vazamento:} prevendo cada mês só com os dados que existiam no mês anterior, a macro-WAPE da MLP é \chave{7,18\%} (baseline 9,60\%).}
-    \end{column}
-    \begin{column}[T]{0.50\textwidth}
-      \vspace{0pt}
-      \uncover<2->{
-        {\color{uelgreen}\small\textbf{WAPE por grupo em 2025 (\%)}}\par
-        \vspace{0.05cm}
-        \begin{tikzpicture}
-          \begin{axis}[barras,height=3.6cm,xmax=15.5,bar width=8pt,area legend,
-            enlarge y limits=0.1167,
-            symbolic y coords={Circulatórias,Diabetes,Neoplasias,Respiratórias},
-            legend style={at={(1,0.36)},anchor=east,draw=none,fill=none,font=\sffamily\scriptsize}]
-            \addplot[fill=dcgrey,draw=none] coordinates {
-              (9.49,Circulatórias) (13.05,Diabetes) (3.20,Neoplasias) (12.64,Respiratórias)};
-            \addplot[fill=dcblue,draw=none] coordinates {
-              (4.13,Circulatórias) (11.62,Diabetes) (2.34,Neoplasias) (5.03,Respiratórias)};
-            \legend{Baseline,MLP oficial}
-          \end{axis}
-        \end{tikzpicture}
-      }
-    \end{column}
-  \end{columns}
-
-\end{frame}
-
-\begin{frame}[plain,noframenumbering]{Apoio: os dados chegam incompletos}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.50\textwidth}
-      \vspace{0pt}
-      {\color{uelgreen}\small\textbf{Fração das AIHs já processada}}\par
-      \nota{Coortes de 2023--2024, por meses desde a internação}
-      \begin{tikzpicture}
-        \begin{axis}[
-          scale only axis,width=0.80\linewidth,height=3.1cm,
-          xmin=-0.3,xmax=4.3,ymin=40,ymax=105,
-          xtick={0,1,2,3,4},ytick={50,75,100},
-          axis lines*=left,axis line style={draw=dcgrey},
-          tick label style={font=\sffamily\scriptsize},
-          xlabel={meses depois},xlabel style={font=\sffamily\scriptsize},
-          nodes near coords,nodes near coords style={font=\sffamily\scriptsize,above left,inner sep=1pt},
-          point meta=y,/pgf/number format/fixed,/pgf/number format/precision=1,
-          /pgf/number format/use comma]
-          \addplot[draw=nivelalerta,densely dashed,forget plot,nodes near coords={}] coordinates {(-0.3,95) (4.3,95)};
-          \node[font=\sffamily\scriptsize,text=nivelalerta,anchor=north east] at (axis cs:4.3,94) {95\%};
-          \addplot[dcblue,mark=*,thick] coordinates {(0,50.6) (1,80.4) (2,90.9) (3,99.1) (4,99.9)};
-        \end{axis}
-      \end{tikzpicture}\par
-      \nota{Abaixo de 95\% (linha tracejada), o mês é imaturo: em 2026, maio, junho e julho.}
-    \end{column}
-    \begin{column}[T]{0.46\textwidth}
-      \vspace{0pt}
-      \uncover<2->{
-        {\color{uelgreen}\small\textbf{Previsão de agosto de 2026}}\par
-        \nota{Usando os dados como chegam, contra a correção pela curva}
-        \vspace{0.10cm}
-        \footnotesize
-        \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrr@{}}
-          \toprule
-          \textbf{Grupo} & \textbf{Sem} & \textbf{Com} & \textbf{Dif.} \\
-          \midrule
-          Circulatórias & 8.068 & 11.069 & -27\% \\
-          Diabetes & 460 & 575 & -20\% \\
-          Neoplasias & 4.735 & 7.363 & -36\% \\
-          Respiratórias & 3.743 & 5.708 & -34\% \\
-          \bottomrule
-        \end{tabular*}\par
-        \vspace{0.15cm}
-        {\small Sem correção, a previsão sai \chave{20\% a 36\% menor}: o atraso parece queda de demanda.}
-      }
-    \end{column}
-  \end{columns}
-
-  \vfill
-  \uncover<3->{
-    \nota{\textbf{Integridade:} as 768 combinações de 2010--2025, recalculadas com o lote novo, são idênticas ao dataset oficial. Nenhuma célula zerada nem feature ausente em 2026.}
-  }
-\end{frame}
-
-\begin{frame}[plain,noframenumbering]{Apoio: como funciona a completude do mês}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.46\textwidth}
-      \vspace{0pt}
-      {\color{uelgreen}\small\textbf{Simulação: último arquivo de julho de 2026}}\par
-      \vspace{0.1cm}
-      \footnotesize
-      \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrl@{}}
-        \toprule
-        \textbf{Mês} & \textbf{Meses depois} & \textbf{Esperada} & \textbf{Situação} \\
-        \midrule
-        jan a mar & 6 a 4 & $\approx$100\% & Maduro \\
-        abr & 3 & 99,1\% & Maduro \\
-        mai & 2 & 90,9\% & \textcolor{nivelatencao}{Imaturo} \\
-        jun & 1 & 80,4\% & \textcolor{nivelatencao}{Imaturo} \\
-        jul & 0 & 50,6\% & \textcolor{nivelatencao}{Imaturo} \\
-        \bottomrule
-      \end{tabular*}\par
-      \vspace{0.1cm}
-      \nota{Completude esperada: fração das AIHs que já deveria ter chegado, lida na curva de meses que já estavam completos. É uma estimativa, não uma medição.}
-    \end{column}
-    \begin{column}[T]{0.50\textwidth}
-      \vspace{0pt}
-      {\color{uelgreen}\small\textbf{Dois usos do mesmo número}}\par
-      \footnotesize
-      \begin{enumerate}
-        \setlength{\itemsep}{3pt}
-        \item \textbf{Filtro da avaliação:} só meses com pelo menos 95\% entram no cálculo do erro (jan a abr). Maio a julho entram nos próximos ciclos.
-        \item \textbf{Correção da previsão:} para prever agosto, julho é dividido por 0,506, junho por 0,804 e maio por 0,909.
-      \end{enumerate}
-      \vspace{0.1cm}
-      \begin{alertblock}{Limitação}
-        \footnotesize
-        O indicador depende só do tempo: os três últimos meses são sempre imaturos. Se o DATASUS atrasar mais que o normal, a correção fica baixa sem aviso. Para virar alarme, comparar a fração que chegou com a esperada.
-      \end{alertblock}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}[plain,noframenumbering]{Apoio: o pacote de entrega}
-  \centering
-  \footnotesize
-  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{9.6cm}@{}}
-    \toprule
-    \textbf{Exigência} & \textbf{Onde está no repositório} \\
-    \midrule
-    1. Repositório & \texttt{solucao/} com os scripts e \texttt{requirements.txt}; \texttt{README.md} com a reprodução \\
-    2. Dataset documentado & \texttt{entrega-etapa4/dataset-documentado.md}, \texttt{solucao/results/data\_quality.csv} \\
-    3. Registro dos experimentos & \texttt{entrega-etapa4/registro-experimentos.md}, \texttt{solucao/results/} \\
-    4. Model Card & \texttt{entrega-etapa4/model-card.md} \\
-    5. Plano de monitoramento & \texttt{entrega-etapa4/plano-monitoramento.md} \\
-    6. Matriz de riscos & \texttt{entrega-etapa4/matriz-riscos.md} \\
-    7. Relatório executivo & \texttt{entrega-etapa4/relatorio-executivo.md} \\
-    \bottomrule
-  \end{tabular}
-
-  \vfill
-  \nota{A documentação técnica detalhada fica em \texttt{solucao/docs/}. Todos os números dos slides vêm de \texttt{solucao/results/}.}
-\end{frame}
 
 \end{document}
