@@ -27,10 +27,13 @@
 \newcommand{\atencao}{\textcolor{nivelatencao}{\textbf{Atenção}}}
 \newcommand{\alta}{\textcolor{nivelalerta}{\textbf{Alta}}}
 \newcommand{\alerta}{\textcolor{nivelalerta}{\textbf{Alerta}}}
+\newcommand{\aula}[1]{\newline{\color{dcgreydark}aula #1}}
+\newcommand{\feito}{\textcolor{nivelok}{\textbf{Aplicado:}}~}
+\newcommand{\poderia}{\textcolor{dcblue}{\textbf{Poderia:}}~}
 \newcommand{\solucao}[1]{\par\vspace{2pt}\textcolor{uelgreen}{\textbf{Solução:}} #1}
 
 \title[Etapa 4: Governança da solução]{Previsão mensal de internações \\ por doenças crônicas}
-\subtitle{Etapa 4 — Governança, monitoramento e entrega final}
+\subtitle{Etapa 4}
 \author[André e Vitor]{André Tomonaga Schettini \and Vitor da Costa Garcia}
 \institute{Governança de TI e de Dados\\Universidade Estadual de Londrina}
 \date{2026}
@@ -42,7 +45,7 @@
 % ---------------------------------------------------------------------------
 \section{Problema}
 
-\begin{frame}[t]{Problema, objetivos e proposta}
+\begin{frame}[t]{Problema, objetivo e proposta}
   \vspace{0.05cm}
   \begingroup
   \setbeamercolor{block title}{fg=white,bg=red!75!black}
@@ -55,16 +58,15 @@
   \vspace{0.25cm}
   \begin{columns}[T,onlytextwidth]
     \begin{column}[T]{0.48\textwidth}
-      \begin{block}{Objetivos estratégicos (Etapa 1)}
-        \begin{enumerate}
-          \item Melhorar a eficiência na \chave{alocação de leitos}
-          \item Apoiar \chave{decisões gerenciais} com base em dados
-        \end{enumerate}
+      \uncover<2->{
+      \begin{block}{Objetivo estratégico (Etapa 1)}
+        Melhorar a eficiência na \chave{alocação de leitos}
         \vspace{0.27cm}
       \end{block}
+      }
     \end{column}
     \begin{column}[T]{0.48\textwidth}
-      \uncover<2->{
+      \uncover<3->{
         \begin{exampleblock}{Proposta}
           Prever, com \chave{um mês de antecedência}, as AIHs iniciais de quatro grupos DCNT no
           Paraná: circulatórias, diabetes, neoplasias malignas e respiratórias selecionadas.
@@ -220,14 +222,13 @@
           \begin{itemize}
             \item Sempre com revisão humana
           \end{itemize}
-          \item Comparação com a regra do ano anterior
         \end{itemize}
       \end{exampleblock}
       \vspace{0.15cm}
       \begin{alertblock}{Usos não recomendados}
         \small
         \begin{itemize}
-          \item Decidir sobre recursos de forma automática, só com base na previsão, sem uma pessoa revisar
+          \item Decisão automática sobre recursos com base na previsão
         \end{itemize}
       \end{alertblock}
     \end{column}
@@ -250,31 +251,33 @@
 \end{frame}
 
 \begin{frame}{Gestão de riscos}
-  \framesubtitle{24 riscos de dados, modelo, privacidade, segurança e ética}
   \vfill
-  \centering
+  \setlength{\leftmargini}{0.9em}
+  \begin{itemize}
+    \setlength{\itemsep}{4pt}
+    \item Foram mapeados \chave{24 riscos} de dados, modelo, privacidade, segurança e ética
+    \item A tabela abaixo mostra 3 exemplos
+  \end{itemize}
+  \vfill
   \small
-  \renewcommand{\arraystretch}{1.35}
-  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{5.9cm}c>{\raggedright\arraybackslash}p{5.4cm}@{}}
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.43\textwidth}c>{\raggedright\arraybackslash}p{0.35\textwidth}@{}}
     \toprule
     \textbf{Risco} & \textbf{Descrição} & \textbf{Nota} & \textbf{Resposta} \\
     \midrule
     D1 & Meses recentes chegam incompletos e parecem queda de demanda & \alta~9 & Corrigir pela curva de completude ou prever mês maduro \\
-    M2 & O modelo erra sempre para o mesmo lado em alguns grupos: prevê menos diabetes e mais respiratórias & \alta~6 & Avisar o planejamento e somar uma margem de segurança; acompanhar o erro de cada grupo \\
-    M6 & O mesmo código gera outro modelo em outra máquina & \alta~6 & Modelo oficial é o arquivo versionado, não um retreino \\
     M7 & Avaliar com dados que ainda não existiriam na hora da previsão (vazamento) & \alta~6 & Avaliar só previsões feitas com os dados disponíveis na época \\
     E1 & Decisão automática de recursos a partir da previsão & \alta~6 & Revisão humana registrada em cada uso \\
     \bottomrule
   \end{tabular}\par
-  \vspace{0.2cm}
-  \nota{Nota $=$ probabilidade $\times$ impacto, de 1 a 3 cada. Os 19 riscos restantes têm nota de 2 a 4.}
+  \vspace{0.25cm}
+  \nota{Nota $=$ probabilidade $\times$ impacto, de 1 a 3 cada.}
   \vfill
 \end{frame}
 
-\begin{frame}{Simulação: como o modelo se sairia em produção?}
+\begin{frame}{Monitoramento}
+  \framesubtitle{Simulação: como o modelo se sairia em produção?}
   \centering
-  {\small O teste de 2025 usou dados já completos. Em produção, os meses chegam aos poucos e podem mudar.}\par
-  \vspace{0.25cm}
   {\color{uelgreen}\small\textbf{O ciclo de monitoramento: um a cada mês publicado pelo DATASUS}}\par
   \vspace{0.12cm}
   \begin{tikzpicture}[
@@ -286,6 +289,7 @@
     \node[box,right=2.6mm of c] (d) {Uma pessoa revisa e registra a decisão};
     \node[box,right=2.6mm of d,fill=dcbluetint] (e) {Previsão liberada, retida ou retreino};
     \foreach \x/\y in {a/b,b/c,c/d,d/e} \draw[flow] (\x) -- (\y);
+    \draw[flow] (e.south) -- ++(0,-0.3) -| (a.south);
   \end{tikzpicture}\par
 
   \vfill
@@ -296,7 +300,6 @@
         \setlength{\itemsep}{3pt}
         \item \textbf{Dados novos:} internações de janeiro a julho de 2026, publicadas depois do treino e nunca vistas pelo modelo
         \item \textbf{Um ciclo} do \texttt{monitoring.py} com o modelo oficial (v1.0.0), como se ele já estivesse em uso
-        \item Maio a julho ainda incompletos: o desempenho foi medido de janeiro a abril
         \item \textbf{Teste dos alarmes:} um surto e uma falha de carga forçados para ver se os indicadores reagem
       \end{itemize}
     \end{block}
@@ -305,93 +308,91 @@
 \end{frame}
 
 \begin{frame}{Indicadores de monitoramento}
-  \framesubtitle{Cada indicador tem uma pergunta, um limite e uma ação}
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.47\textwidth}
-      \vspace{0pt}
-      {\color{uelgreen}\small\textbf{19 indicadores, em quatro grupos}}\par
-      \vspace{0.15cm}
-      \footnotesize
-      \renewcommand{\arraystretch}{1.3}
-      \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{3.9cm}@{}}
-        \toprule
-        \textbf{Dados} (7) & O dado chegou completo e parecido com o treino? \\
-        \textbf{Modelo} (4) & Continua acertando e melhor que a regra simples? \\
-        \textbf{Negócio} (4) & A previsão traz benefício e é usada? \\
-        \textbf{Governança} (4) & Incidentes, reclamações e erro desigual entre grupos \\
-        \bottomrule
-      \end{tabular}\par
-      \vspace{0.15cm}
-      \nota{Os 19 indicadores, com limites e ações, estão detalhados em \texttt{entrega-etapa4/plano-monitoramento.md}.}
-    \end{column}
-    \begin{column}[T]{0.49\textwidth}
-      \vspace{0pt}
-      \uncover<2->{
-        {\color{uelgreen}\small\textbf{Três exemplos}}\par
-        \vspace{0.1cm}
-        \begin{block}{Dados: completude do mês}
-          \scriptsize
-          \textbf{Limite:} estimativa de pelo menos 95\% das AIHs já processadas\par
-          \textbf{Ação:} o mês fica fora da previsão sem correção
-        \end{block}
-        \vspace{-0.1cm}
-        \begin{block}{Modelo: MLP contra a regra simples}
-          \scriptsize
-          \textbf{Limite:} MLP pior que o baseline é \alerta\par
-          \textbf{Ação:} três ciclos seguidos disparam a avaliação de retreino
-        \end{block}
-        \vspace{-0.1cm}
-        \begin{block}{Modelo: erro sistemático por grupo}
-          \scriptsize
-          \textbf{Limite:} viés de 5\% é \atencao{}; de 10\% é \alerta\par
-          \textbf{Ação:} avisar o planejamento e somar uma margem de segurança
-        \end{block}
-      }
-    \end{column}
-  \end{columns}
+  \vfill
+  \setlength{\leftmargini}{0.9em}
+  \begin{itemize}
+    \setlength{\itemsep}{4pt}
+    \item Foram definidos \chave{19 indicadores} de dados, modelo, negócio e governança
+    \item A tabela abaixo mostra 3 exemplos
+  \end{itemize}
+  \vfill
+  \small
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.25\textwidth}>{\raggedright\arraybackslash}p{0.29\textwidth}>{\raggedright\arraybackslash}p{0.29\textwidth}@{}}
+    \toprule
+    \textbf{Grupo} & \textbf{Indicador} & \textbf{Limite} & \textbf{Ação} \\
+    \midrule
+    Dados & Completude do mês & Estimativa de pelo menos 95\% das AIHs já processadas & Fica fora do cálculo do desempenho e é corrigido antes de prever \\
+    Dados & Valores fora do que o modelo viu no treino & 10\% acima do maior valor do treino é \alerta & Avaliar retreino \\
+    Modelo & MLP contra a regra simples & MLP pior que o baseline é \alerta & Três ciclos seguidos disparam a avaliação de retreino \\
+    \bottomrule
+  \end{tabular}\par
+  \vspace{0.25cm}
+  \nota{Os 19 indicadores, com limites e ações, estão detalhados em \texttt{entrega-etapa4/plano-monitoramento.md}.}
+  \vfill
 \end{frame}
 
 % ---------------------------------------------------------------------------
 \section{Resultado}
 
-\begin{frame}{Resultado da simulação}
+\begin{frame}[t]{Resultado da simulação}
   \framesubtitle{Modelo oficial com as internações de janeiro a julho de 2026}
-  {\color{uelgreen}\small\textbf{Indicadores que dispararam}}\par
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}[T]{0.84\textwidth}
+      \vspace{0pt}
+      \footnotesize
+      \setlength{\leftmargini}{0.9em}
+      \begin{itemize}
+        \setlength{\itemsep}{2pt}
+        \item \chave{9 dos 19 indicadores} medidos, em 14 medições
+        \item Não medidos: indicadores de negócio e governança
+      \end{itemize}
+    \end{column}
+    \begin{column}[T]{0.14\textwidth}
+      \vspace{0pt}
+      \small
+      \begin{tabular}{@{}rl@{}}
+        \textbf{5} & \alerta \\
+        \textbf{4} & \atencao \\
+        \textbf{5} & \ok \\
+      \end{tabular}
+    \end{column}
+  \end{columns}
+  \vspace{0.05cm}
+  {\color{uelgreen}\small\textbf{Três exemplos de indicadores medidos}}\par
   \vspace{0.1cm}
   \footnotesize
-  \renewcommand{\arraystretch}{1.25}
+  \renewcommand{\arraystretch}{1.15}
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrll@{}}
     \toprule
     \textbf{Mês} & \textbf{Indicador} & \textbf{Medido} & \textbf{Limite} & \textbf{Nível} \\
     \midrule
-    Janeiro & Viés em diabetes (ex. 3) & -22,2\% & $\pm$10\% & \alerta \\
-    Fevereiro & MLP contra a regra simples (ex. 2) & 5,60\% & regra: 2,80\% & \alerta \\
-    Abril & Viés em respiratórias (ex. 3) & +9,2\% & $\pm$5\% & \atencao \\
-    Maio a julho & Completude do mês (ex. 1) & 51\% a 91\% & mín. 95\% & \textcolor{nivelatencao}{\textbf{Imaturo}} \\
+    Janeiro & Meses zerados ou vazios & 0 & qualquer um é alerta & \ok \\
+    Fevereiro & MLP contra a regra simples & MLP 5,60\%; regra 2,80\% & alerta: $E_{\text{MLP}} > E_{\text{baseline}}$ & \alerta \\
+    Março & Erro médio do modelo (macro-WAPE) & 9,33\% & atenção: 7,5\%; alerta: 10\% & \atencao \\
     \bottomrule
   \end{tabular*}\par
-  \vspace{0.02cm}
-  \nota{Previsões feitas só com os dados que existiam na época. Regra simples: repetir o mesmo mês do ano anterior. Sem correção, maio a julho deixariam a previsão de agosto de 20\% a 36\% menor.}
-  \vspace{0.15cm}
+  \vspace{0.12cm}
+  {\color{uelgreen}\small\textbf{Do alerta à ação}}\par
+  \vspace{0.05cm}
   \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.36\textwidth}
-      \vspace{0pt}
-      \uncover<3->{
-        {\small A simulação mostrou riscos que o \chave{teste retrospectivo escondia}.}
-      }
+    \begin{column}[T]{0.315\textwidth}
+      \setbeamercolor{block title}{bg=nivelok,fg=white}
+      \begin{block}{OK: meses zerados}
+        \scriptsize A previsão segue normalmente.
+      \end{block}
     \end{column}
-    \begin{column}[T]{0.60\textwidth}
-      \vspace{0pt}
-      \uncover<2->{
-        \begin{block}{Decisão registrada}
-          \scriptsize
-          \begin{itemize}
-            \item Corrigir maio a julho pela curva de completude antes de prever
-            \item \textbf{Não retreinar ainda:} o alerta não se repetiu por 3 ciclos seguidos
-            \item Avisar o planejamento: subestima diabetes, superestima respiratórias
-          \end{itemize}
-        \end{block}
-      }
+    \begin{column}[T]{0.315\textwidth}
+      \setbeamercolor{block title}{bg=nivelatencao,fg=white}
+      \begin{block}{Atenção: erro de 9,33\% em março}
+        \scriptsize Acompanhar no próximo ciclo.
+      \end{block}
+    \end{column}
+    \begin{column}[T]{0.315\textwidth}
+      \setbeamercolor{block title}{bg=nivelalerta,fg=white}
+      \begin{block}{Alerta: MLP pior que o baseline}
+        \scriptsize Revisão humana; retreino após 3 ciclos.
+      \end{block}
     \end{column}
   \end{columns}
 \end{frame}
@@ -410,27 +411,35 @@
       {\color{dcblue}\large\textbf{Técnicos}}\par
       \vspace{0.2cm}
       \begin{block}{O modelo muda de um computador para outro}
+        \begin{minipage}[t][1.45cm][t]{\linewidth}\raggedright
         Com o mesmo código e os mesmos dados, a busca escolheu hiperparâmetros diferentes.
         \solucao{modelo protegido por hash; retreinos são feitos e comparados na mesma máquina.}
+        \end{minipage}
       \end{block}
       \vspace{0.3cm}
       \begin{block}{Hash de bytes contra hash de conteúdo}
+        \begin{minipage}[t][1.45cm][t]{\linewidth}\raggedright
         O mesmo dataset tem outro SHA-256 em outra máquina e bloqueava a avaliação.
         \solucao{se o hash diverge, comparamos o conteúdo dos dados.}
+        \end{minipage}
       \end{block}
     \end{column}
     \begin{column}[T]{0.48\textwidth}
       \vspace{0pt}
       {\color{uelgreen}\large\textbf{Metodológicos}}\par
       \vspace{0.2cm}
-      \begin{block}{Atraso de processamento}
-        Metade das AIHs chega no mês da internação; o teste de 2025 não mostrava isso.
-        \solucao{meses abaixo de 95\% de completude ficam fora e são corrigidos antes de prever.}
+      \begin{block}{Limites sem histórico de operação}
+        \begin{minipage}[t][1.45cm][t]{\linewidth}\raggedright
+        Não havia uso real para saber quanto erro é aceitável.
+        \solucao{atenção em 7,5\%, acima da variação entre máquinas; alerta em 10\%, perto do erro na pandemia.}
+        \end{minipage}
       \end{block}
       \vspace{0.3cm}
       \begin{block}{Rupturas como a pandemia}
+        \begin{minipage}[t][1.45cm][t]{\linewidth}\raggedright
         Na pandemia o erro da MLP subiu de 4,13\% para 10,62\%.
         \solucao{alerta calibrado nesse erro (10\%) e revisão humana reforçada.}
+        \end{minipage}
       \end{block}
     \end{column}
   \end{columns}
@@ -440,37 +449,43 @@
 % ---------------------------------------------------------------------------
 \section{Conclusão}
 
-\begin{frame}{Atendimento aos objetivos estratégicos}
+\begin{frame}{Atendimento ao objetivo estratégico}
   \centering
   \footnotesize
-  \begin{tabular}{@{}p{3.2cm}p{4.6cm}p{5.4cm}@{}}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.2cm}p{4.6cm}p{5.4cm}@{}}
     \toprule
     \textbf{Objetivo} & \textbf{O que a solução entrega} & \textbf{O que falta} \\
     \midrule
-    Eficiência na alocação de leitos & Previsão mensal por grupo, com erro menor que a regra do ano anterior & Previsão regional e conversão de internações em leitos ocupados (CNES) \\
-    \addlinespace
-    Decisões gerenciais com base em dados & Alertas por nível, registro de decisões, Model Card e matriz de riscos & Painel para gestores e uso real da previsão \\
+    Melhorar a eficiência na alocação de leitos & Previsão mensal por grupo, com erro menor que a regra do ano anterior & Previsão regional e conversão de internações em leitos ocupados (CNES) \\
     \bottomrule
   \end{tabular}
 
-  \vfill
-  \begin{columns}[T,onlytextwidth]
-    \begin{column}{0.48\textwidth}
-      \centering\numero{Parcial}{nos dois objetivos}
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \centering\numero{7 de 7}{produtos de governança entregues}
-    \end{column}
-  \end{columns}
+\end{frame}
 
-  \vfill
-  \nota{\textbf{Prioridade da disciplina:} tornar o modelo governável antes de colocá-lo num painel. Um painel sobre um modelo sem monitoramento ampliaria o risco de uso indevido.}
+\begin{frame}{Como foram aplicados os conceitos estudados na disciplina}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.22}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.36\textwidth}>{\raggedright\arraybackslash}p{0.60\textwidth}@{}}
+    \toprule
+    \textbf{Conteúdo da disciplina} & \textbf{Como foi aplicado no projeto} \\
+    \midrule
+    Governança corporativa & Alta gestão aprova o uso; Model Card com usos permitidos e proibidos \\
+    Estratégia e alinhamento & O negócio define o objetivo; a TI entrega a previsão e mede o atendimento \\
+    Quem decide o quê & Negócio aprova a troca de versão; TI decide arquitetura e ferramentas \\
+    ISO 38500 & Avaliar na simulação, dirigir com regras de uso, monitorar com 19 indicadores \\
+    Gestão de TI & Mudança só com aprovação; integridade por hash e dados fora do Git \\
+    Governança de dados: metadados e linhagem & Dicionário, origem e linhagem no MLflow; a Diretoria de Regulação como \textit{data owner} \\
+    Qualidade de dados (ISO 25012) & Completude, validade e consistência medidas \\
+    Cultura \textit{data-driven} e IA responsável & Previsão só como apoio, com revisão humana \\
+    DataOps e MLOps & Pipeline versionado, Model Registry e monitoramento de \textit{drift} \\
+    \bottomrule
+  \end{tabular}
 \end{frame}
 
 \begin{frame}{Limitações, aprendizados e próximos passos}
   \vfill
   \begin{columns}[T,onlytextwidth]
-    \begin{column}[T]{0.31\textwidth}
+    \begin{column}[T]{0.32\textwidth}
       \vspace{0pt}
       {\color{nivelalerta}\large\textbf{Limitações}}\par
       \vspace{0.25cm}
@@ -478,12 +493,11 @@
       \begin{itemize}
         \setlength{\itemsep}{6pt}
         \item Previsão estadual, em internações, não em leitos
-        \item Sempre 3 meses desatualizado: o DATASUS demora a processar as AIHs
         \item Indicadores de negócio ainda não exercidos
         \item Difícil acesso a outros dados que apoiam a decisão
       \end{itemize}
     \end{column}
-    \begin{column}[T]{0.29\textwidth}
+    \begin{column}[T]{0.32\textwidth}
       \vspace{0pt}
       {\color{uelgreen}\large\textbf{Aprendizados}}\par
       \vspace{0.25cm}
@@ -491,23 +505,21 @@
       \begin{itemize}
         \setlength{\itemsep}{6pt}
         \item Novas ferramentas e técnicas de governança em ML
-        \item O monitoramento revelou riscos que o teste retrospectivo escondia
-        \item Registrar a máquina faz parte da rastreabilidade
+        \item A busca com Optuna pode chegar a modelos diferentes em máquinas diferentes, por diferenças de arredondamento
       \end{itemize}
     \end{column}
-    \begin{column}[T]{0.36\textwidth}
+    \begin{column}[T]{0.32\textwidth}
       \vspace{0pt}
       {\color{dcblue}\large\textbf{Próximos passos}}\par
       \vspace{0.25cm}
       \small
-      \begin{enumerate}
-        \setlength{\itemsep}{3pt}
-        \item Corrigir os meses incompletos
+      \begin{itemize}
+        \setlength{\itemsep}{6pt}
         \item Mais ciclos de monitoramento
         \item Análise por regiões de saúde
         \item Buscar dados fora do escopo desta pesquisa: ocupação, equipes, estoques
         \item Aplicar técnicas de XAI para explicar as previsões do modelo
-      \end{enumerate}
+      \end{itemize}
     \end{column}
   \end{columns}
   \vfill
