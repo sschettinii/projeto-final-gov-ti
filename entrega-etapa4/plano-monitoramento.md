@@ -68,4 +68,5 @@ Por último, a governança acompanha o que não aparece nas métricas: incidente
 | --- | --- | --- | --- |
 | Incidentes | Vazamento de dados, falha da pipeline ou modelo com hash diferente | Qualquer ocorrência | Interromper o uso, guardar as evidências e registrar |
 | Reclamações | Issues ou contestações sobre a previsão | Sem resposta em 30 dias | Responder e registrar a decisão |
+| Vieses entre grupos | Diferença entre o maior e o menor WAPE por grupo | Atenção a partir de 8 pontos percentuais; alerta a partir de 10 | Investigar o grupo pior e avaliar um ajuste ou um aviso específico |
 | Necessidade de revisão | Gatilho de retreino, mudança na fonte ou novo uso da previsão | Qualquer gatilho | Revisar o Model Card e a matriz de riscos |

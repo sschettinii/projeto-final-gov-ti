@@ -23,10 +23,7 @@ Esse teste, porém, usou os meses anteriores já completos, e na prática eles a
 
 Entre os benefícios esperados estão a alocação de leitos, equipes e insumos antes dos picos, decisões de alocação apoiadas em dados e suporte à prestação de contas da alta gestão.
 
-Com relação aos dois objetivos estratégicos definidos na Etapa 1, a análise mostrou que os dois foram atendidos em parte:
-
-- Melhorar a eficiência na alocação de leitos: a previsão existe e tem metade do erro da referência, mas é estadual, não por região, e prevê internações, não ocupação de leitos;
-- Apoiar decisões gerenciais com base em dados: existem previsões, alertas de monitoramento e registro de decisões, mas o painel para gestores não foi construído.
+Com relação ao objetivo estratégico definido na Etapa 1, melhorar a eficiência na alocação de leitos, a análise mostrou que ele foi atendido em parte: a previsão existe e tem metade do erro da referência, mas é estadual, não por região, e prevê internações, não ocupação de leitos. A Etapa 1 também listava apoiar decisões gerenciais com base em dados, mas isso é o meio para chegar ao objetivo, e não um objetivo à parte: a solução já entrega previsões, alertas de monitoramento e registro de decisões, e falta o painel para gestores.
 
 Por fim, ao simular a chegada de dados novos com as internações de 2026, o primeiro ciclo de monitoramento encontrou três pontos que precisam de atenção antes de qualquer uso real:
 
@@ -42,7 +39,7 @@ Para que a solução possa ser auditada e mantida, foram adotadas as seguintes p
 - Versionamento: Git para o código, SHA-256 para os arquivos brutos e o dataset, uma pasta com hash para cada execução e a tag `modelo-v1.0.0` para o modelo em uso;
 - Rastreabilidade: cada execução guarda dataset, parâmetros, versões das bibliotecas, máquina, métricas, previsões e modelo, organizados também no MLflow;
 - Documentação: Model Card com usos permitidos e proibidos, e dataset documentado com dicionário, qualidade, origem e transformações;
-- Gestão de riscos: matriz com 23 riscos de dados, modelo, privacidade, segurança e ética, cada um com controle e responsável;
+- Gestão de riscos: matriz com 22 riscos de dados, modelo, privacidade, segurança e ética, cada um com controle e responsável;
 - Monitoramento: 19 indicadores de dados, modelo, negócio e governança, cada um com limite e ação;
 - Privacidade: só três campos dos registros brutos são lidos e só contagens do estado são gravadas, com no mínimo 470 internações por célula;
 - Supervisão humana: o modelo não toma nenhuma decisão sozinho, e retreino e troca de versão precisam de aprovação registrada.

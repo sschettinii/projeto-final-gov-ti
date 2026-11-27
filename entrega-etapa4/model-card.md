@@ -44,7 +44,7 @@ Rede neural pequena (MLP) que prevê, com um mês de antecedência, quantas inte
 
 ### Model Description
 
-O objetivo do modelo é estimar a demanda do mês seguinte para quatro grupos de doenças: circulatórias, diabetes, neoplasias malignas e respiratórias selecionadas. A previsão é um insumo para o planejamento de leitos, equipes e insumos da Secretaria de Estado da Saúde do Paraná (SESA-PR). Ela mostra quais meses devem ter mais internações, mas a decisão continua com as pessoas responsáveis pelo planejamento.
+O objetivo do modelo é estimar a demanda do mês seguinte para quatro grupos de doenças crônicas não transmissiveis. A previsão é um indicador para o planejamento de leitos. Ela mostra quais meses devem ter mais internações, mas a decisão continua com as pessoas responsáveis pelo planejamento.
 
 O modelo usa só meses anteriores ao mês previsto: contagens recentes, médias móveis, variação anual e calendário. Ele foi escolhido entre 9 famílias de modelos e é comparado sempre com uma regra simples de referência: repetir o mesmo mês do ano anterior.
 
@@ -125,7 +125,7 @@ Os usuários previstos são os gestores regionais de saúde da SESA-PR e os dire
 | Mudança de distribuição | O modelo extrapola fora do padrão aprendido | Monitoramento de drift |
 | Uso fora do escopo | Decisões indevidas sobre pessoas ou hospitais | Usos proibidos explícitos e revisão humana |
 
-A lista completa, com 23 riscos de dados, modelo, privacidade, segurança e ética, está na [matriz de riscos](matriz-riscos.md).
+A lista completa, com 22 riscos de dados, modelo, privacidade, segurança e ética, está na [matriz de riscos](matriz-riscos.md).
 
 ### Aspectos éticos
 
