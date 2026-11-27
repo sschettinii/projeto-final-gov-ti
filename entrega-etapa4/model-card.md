@@ -44,7 +44,7 @@ Rede neural pequena (MLP) que prevê, com um mês de antecedência, quantas inte
 
 ### Model Description
 
-O objetivo do modelo é estimar a demanda do mês seguinte para quatro grupos de doenças crônicas não transmissiveis. A previsão é um indicador para o planejamento de leitos. Ela mostra quais meses devem ter mais internações, mas a decisão continua com as pessoas responsáveis pelo planejamento.
+O objetivo do modelo é estimar a demanda do mês seguinte para quatro grupos de doenças crônicas não transmissíveis. A previsão é um indicador para o planejamento de leitos. Ela mostra quais meses devem ter mais internações, mas a decisão continua com as pessoas responsáveis pelo planejamento.
 
 O modelo usa só meses anteriores ao mês previsto: contagens recentes, médias móveis, variação anual e calendário. Ele foi escolhido entre 9 famílias de modelos e é comparado sempre com uma regra simples de referência: repetir o mesmo mês do ano anterior.
 
@@ -105,12 +105,12 @@ Os usuários previstos são os gestores regionais de saúde da SESA-PR e os dire
 
 ### Limitações
 
-- O teste de 2025 original usa contagens já consolidadas, o que é um vazamento de dados: para prever um mês, o modelo viu o mês anterior completo, mas na época só metade das AIHs dele teria chegado. Refeito como seria em operação, com os meses recentes corrigidos pela curva de completude, a macro-WAPE sobe de 5,78% para 7,18% (seção Results). Sem essa correção, o erro passa de 35%.
+- O teste de 2025 original tem vazamento de dados. Para prever cada mês, o modelo viu o mês anterior completo, mas na época só metade das AIHs dele teria chegado. Refeito como seria em operação, com os meses recentes corrigidos pela curva de completude, a macro-WAPE sobe de 5,78% para 7,18% (seção Results). Sem essa correção, o erro passa de 35%.
 - O resultado varia entre máquinas. A mesma configuração deu macro-WAPE de 5,78% na máquina da entrega e até 5,00% em outro computador. O desempenho deve ser lido como uma faixa de cerca de 5% a 6%.
 - São quatro séries mensais correlacionadas, não 768 observações independentes, então a incerteza da avaliação é maior do que o número de linhas sugere.
 - O modelo não sabe nada sobre capacidade instalada, ocupação diária, equipes, estoques, população ou políticas locais.
 - O recorte por CID principal não pega todas as internações de pessoas com doença crônica.
-- O erro de diabetes é o maior dos quatro grupos: 11,62% com dados consolidados e 13,43% em tempo real, um pouco pior que a regra de referência (13,05%).
+- Diabetes tem o maior erro dos quatro grupos: 11,62% com dados consolidados e 13,43% em tempo real. Em tempo real, fica um pouco pior que a regra de referência, que erra 13,05%.
 - Rupturas bruscas, como a pandemia, aumentam o erro e não são antecipadas pelo modelo.
 - O modelo é estadual. Aplicar a previsão a municípios ou hospitais exige outro modelo.
 
@@ -208,7 +208,7 @@ Não há embaralhamento aleatório. Em cada fold de validação, o treino usa s�
 
 - Arquivo do modelo: `model.joblib` com 27 KB.
 - Execução oficial avaliada em 2026-11-06.
-- Tempo de treino não foi registrado; a pipeline roda num computador comum, sem GPU.
+- A busca completa (`tuning.py`) leva cerca de 4 minutos num computador comum, sem GPU; o tempo exato não é registrado pela pipeline.
 
 ## Evaluation
 
@@ -237,7 +237,7 @@ Métricas de classificação (accuracy, precision, recall, F1, AUC) não se apli
 
 ### Results
 
-Há dois resultados para 2025. O primeiro é o teste original, com as contagens já consolidadas. Ele mede o modelo quando as entradas estão completas e é otimista, porque usa informação que não existiria no momento da previsão. O segundo é o teste em tempo real, em que cada mês é previsto só com os arquivos processados até o mês anterior, com os meses recentes corrigidos pela curva de completude daquele momento, e comparado com o valor final. É o erro esperado em operação.
+Há dois resultados para 2025. O primeiro é o teste original, com as contagens já consolidadas. Ele mede o modelo quando as entradas estão completas e é otimista, porque usa informação que não existiria no momento da previsão. O segundo é o teste em tempo real. Nele, cada mês é previsto só com os arquivos processados até o mês anterior, com os meses recentes corrigidos pela curva de completude daquele momento, e a previsão é comparada com o valor final. É o erro esperado em operação.
 
 **Teste com dados consolidados.** Fonte: `results/20261105T205507/metrics.csv`.
 
@@ -272,15 +272,15 @@ A regra de referência quase não muda, porque ela usa o mesmo mês do ano anter
 
 #### Summary
 
-Com dados consolidados, a MLP reduz o erro médio em 52% e a macro-WAPE em 40% em relação à regra de referência, é melhor nos quatro grupos e subestima em todos eles, principalmente em circulatórias.
+Com dados consolidados, a MLP reduz o erro médio em 52% e a macro-WAPE em 40% em relação à regra de referência. É melhor nos quatro grupos e subestima todos eles, principalmente circulatórias.
 
-Em tempo real, que é como o modelo seria usado, a vantagem diminui mas continua: macro-WAPE de 7,18% contra 9,60%, e erro médio 43% menor. A MLP continua bem melhor em circulatórias e respiratórias, mas fica um pouco pior que a referência em diabetes e neoplasias. O viés muda de direção conforme o grupo: subestima diabetes (-13,43%) e circulatórias, e superestima respiratórias (+7,31%) e neoplasias. Corrigir os meses recentes é obrigatório: sem a correção, o erro passa de 35%.
+Em tempo real, que é como o modelo seria usado, a vantagem diminui mas continua. A macro-WAPE fica em 7,18% contra 9,60%, e o erro médio é 43% menor. A MLP continua bem melhor em circulatórias e respiratórias, mas fica um pouco pior que a referência em diabetes e neoplasias. O viés muda de direção conforme o grupo: o modelo subestima diabetes e circulatórias e superestima respiratórias e neoplasias. Os maiores vieses são em diabetes (-13,43%) e respiratórias (+7,31%). Corrigir os meses recentes é obrigatório: sem isso, o erro passa de 35%.
 
 ## Model Examination
 
 ### Variação entre máquinas
 
-O mesmo código, com os mesmos dados e as mesmas versões de bibliotecas, gera modelos diferentes em máquinas diferentes. A MLP com L-BFGS amplifica diferenças de arredondamento da ordem de 10⁻¹⁶ ([reproducao_etapa3.md](../solucao/docs/reproducao_etapa3.md)).
+O mesmo código, com os mesmos dados e as mesmas versões de bibliotecas, gera modelos diferentes em máquinas diferentes. A MLP com L-BFGS amplifica diferenças de arredondamento da ordem de 10⁻¹⁶.
 
 | Treino com a mesma configuração | Macro-WAPE em 2025 |
 | --- | ---: |
@@ -293,7 +293,7 @@ Por isso o modelo oficial é o arquivo versionado, e um retreino serve só para 
 
 ### Desempenho em períodos de ruptura
 
-Um backtest de 2018 a 2025 com a mesma arquitetura (versão com `alpha = 0,71`) mostrou o erro médio mensal da MLP subindo de 4,13% antes da pandemia para 10,62% durante ela, com pico de 41,20% em 2020-04. A regra de referência subiu de 5,44% para 20,70%. Essa análise não foi repetida com o `alpha` oficial.
+Um backtest de 2018 a 2025 usou a mesma arquitetura, mas com `alpha = 0,71`. O erro médio mensal da MLP subiu de 4,13% antes da pandemia para 10,62% durante ela, com pico de 41,20% em 2020-04. O da regra de referência subiu de 5,44% para 20,70%. Essa análise não foi repetida com o `alpha` oficial.
 
 ## Environmental Impact
 

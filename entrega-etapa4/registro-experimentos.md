@@ -2,7 +2,7 @@
 
 O registro dos experimentos é gerado automaticamente pelos scripts a cada execução, em `solucao/results/`.
 
-Cada experimento é uma execução de `tuning.py` seguida de `evaluation.py` e o `evaluation.py`. O `tuning.py` cria uma pasta nova com a data e hora de início. Nada é sobrescrito: cada execução cria uma pasta nova, e uma pasta só pode ser avaliada uma vez.
+Cada experimento é uma execução de `tuning.py` seguida de `evaluation.py`. O `tuning.py` cria uma pasta nova com a data e hora de início. Nada é sobrescrito, e uma pasta só pode ser avaliada uma vez.
 
 ## Parâmetros
 
@@ -23,3 +23,9 @@ As métricas de teste de cada execução ficam em `metrics.csv`, e o resumo de t
 O `metrics.csv` de cada execução mede o teste de 2025 com os meses anteriores já completos, o que usa informação que ainda não existiria no momento da previsão. Por isso o modelo oficial também é avaliado pelo `realtime_evaluation.py`, que prevê cada mês só com os arquivos processados até o mês anterior. O resultado fica em `results/realtime_202607/`, com as previsões e as métricas de cada forma de montar as entradas.
 
 Os ciclos de monitoramento ficam em `results/monitoring_<competência>/`. O primeiro ciclo foi rodado duas vezes, e as duas pastas ficam guardadas: `monitoring_202607` avaliava previsões refeitas com os arquivos de julho, e `monitoring_202607_v2` avalia as previsões como teriam sido emitidas em cada mês.
+
+## MLflow
+
+O `tracking.py` registra no MLflow tudo o que está em `results/`: cada execução vira um run com parâmetros, métricas, artefatos e o modelo, e cada ciclo de monitoramento vira um run ligado ao modelo oficial. O modelo oficial fica no Model Registry como `previsao-aih-dcnt-mlp`, com o apelido `champion`. A ligação entre cada pasta e o seu run fica em `results/mlflow_runs.csv`. As dependências do MLflow ficam em `solucao/requirements-tracking.txt`, separadas das da pipeline.
+
+Os arquivos de `results/` continuam sendo a fonte da verdade: o MLflow é só uma visão sobre eles e pode ser recriado a qualquer momento. Os experimentos das Etapas 2 e 3, anteriores a essa estrutura, estão reunidos em `results/registro_unificado.csv`.

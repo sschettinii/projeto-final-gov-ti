@@ -10,8 +10,8 @@ O dataset usado no treino e na avaliação é `data/modelagem_dcnt_mensal_201001
 Uma linha por mês de internação e grupo. 768 linhas (192 meses × 4 grupos), sem valores ausentes.
 
 | Coluna | Tipo | Descrição |
-| --- | --- | --- | 
-| mes_internacao | texto (AAAA-MM) | Mês de internação previsto | 2010-01 a 2025-12 |
+| --- | --- | --- |
+| mes_internacao | texto (AAAA-MM) | Mês de internação previsto, de 2010-01 a 2025-12 |
 | grupo_dcnt | texto | circulatorias, diabetes, neoplasias_malignas ou respiratorias_selecionadas |
 | aih_iniciais | inteiro | **Alvo.** AIHs iniciais do grupo no mês |
 | mes_numero | inteiro | Mês do ano |
@@ -47,7 +47,7 @@ O script `quality.py` lê todos os registros brutos e classifica cada um pelo pr
 | CID DCNT em AIH de continuidade (`IDENT = 5`) | 651 | 0,00% |
 | **Selecionados** | **3.608.323** | **23,85%** |
 
-Não foi encontrada nenhuma data de internação inválida ou vazia, e todos os registros tinham o CID principal preenchido. Outras medidas:
+Não foi encontrada nenhuma data de internação inválida ou vazia, e todos os registros tinham o CID principal preenchido.
 
 ## Validação
 
@@ -68,9 +68,11 @@ O `preprocessing.py` para a execução se alguma dessas condições falhar. Isso
 
 Dos arquivos brutos, só três campos são lidos:
 
-- `DT_INTER`: Data de internação, `AAAAMMDD` | Mês de internação (`AAAA-MM`)
-- `DIAG_PRINC`: CID-10 do diagnóstico principal | Grupo DCNT pela categoria
-- `IDENT`: Tipo de AIH: `1` inicial, `5` continuidade | Só `1` é contada
+| Campo | Significado | Uso |
+| --- | --- | --- |
+| `DT_INTER` | Data de internação, `AAAAMMDD` | Mês de internação (`AAAA-MM`) |
+| `DIAG_PRINC` | CID-10 do diagnóstico principal | Grupo DCNT pela categoria |
+| `IDENT` | Tipo de AIH: `1` inicial, `5` continuidade | Só `1` é contada |
 
 ## Transformações
 

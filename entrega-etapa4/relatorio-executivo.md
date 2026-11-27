@@ -4,7 +4,7 @@ Relatório executivo — Projeto Final de Governança de TI e de Dados (UEL)
 
 ## O que o projeto fez?
 
-A equipe desenvolveu, entre as Etapas 1 e 4 da disciplina, uma solução de ciência de dados que tem como objetivo prever, com um mês de antecedência, quantas internações iniciais por doenças crônicas não transmissíveis (DCNT) os hospitais do Paraná vão registrar. A solução foi pensada para apoiar a Secretaria de Estado da Saúde do Paraná (SESA-PR), que tem dificuldade em prever essa demanda ao longo do ano e por isso alterna entre picos de superlotação e leitos subutilizados.
+Entre as Etapas 1 e 4 da disciplina, a equipe desenvolveu uma solução de ciência de dados que prevê, com um mês de antecedência, quantas internações iniciais por doenças crônicas não transmissíveis (DCNT) os hospitais do Paraná vão registrar. O objetivo é apoiar a Secretaria de Estado da Saúde do Paraná (SESA-PR). Hoje ela tem dificuldade em prever essa demanda ao longo do ano e alterna entre picos de superlotação e leitos subutilizados.
 
 A previsão é feita para quatro grupos de doenças: circulatórias, diabetes, neoplasias malignas e respiratórias selecionadas. Os dados vêm do Sistema de Informações Hospitalares do SUS (SIH/SUS), público e mantido pelo DATASUS. Além de treinar o modelo, a Etapa 4 transformou a solução em algo governável, com versionamento, rastreamento de experimentos, Model Card, monitoramento e gestão de riscos.
 
@@ -19,13 +19,13 @@ Foram lidos 15,1 milhões de registros de internação de 212 arquivos mensais (
 - o pior grupo é diabetes, com 11,62% de erro, por ter as menores contagens;
 - o modelo tende a subestimar a demanda em todos os grupos, principalmente em circulatórias.
 
-Esse teste, porém, usou os meses anteriores já completos, e na prática eles ainda estariam chegando. Refazendo o teste como ele seria em operação, prevendo cada mês só com os dados disponíveis no mês anterior e corrigindo os meses recentes pela curva de completude, o erro proporcional médio dos grupos fica em 7,18%, ainda bem abaixo dos 9,60% da referência. Nesse cenário o modelo continua melhor em circulatórias e respiratórias, mas fica um pouco pior que a referência em diabetes e neoplasias. Sem a correção dos meses recentes, o erro passaria de 35%.
+Esse teste, porém, usou os meses anteriores já completos. Na prática, eles ainda estariam chegando. O teste foi refeito como seria em operação: cada mês é previsto só com os dados disponíveis no mês anterior, e os meses recentes são corrigidos pela curva de completude. Assim, o erro proporcional médio dos grupos fica em 7,18%, ainda bem abaixo dos 9,60% da referência. O modelo continua melhor em circulatórias e respiratórias, mas fica um pouco pior que a referência em diabetes e neoplasias. Sem a correção dos meses recentes, o erro passaria de 35%.
 
 Entre os benefícios esperados estão a alocação de leitos, equipes e insumos antes dos picos, decisões de alocação apoiadas em dados e suporte à prestação de contas da alta gestão.
 
-Com relação ao objetivo estratégico definido na Etapa 1, melhorar a eficiência na alocação de leitos, a análise mostrou que ele foi atendido em parte: a previsão existe e tem metade do erro da referência, mas é estadual, não por região, e prevê internações, não ocupação de leitos. A Etapa 1 também listava apoiar decisões gerenciais com base em dados, mas isso é o meio para chegar ao objetivo, e não um objetivo à parte: a solução já entrega previsões, alertas de monitoramento e registro de decisões, e falta o painel para gestores.
+O objetivo estratégico da Etapa 1, melhorar a eficiência na alocação de leitos, foi atendido em parte. A previsão existe e erra menos que a referência: 7,18% contra 9,60% em tempo real. Mas ela é estadual, não por região, e prevê internações, não ocupação de leitos. A Etapa 1 também citava apoiar decisões gerenciais com base em dados. Isso é o caminho para o objetivo, não um objetivo separado. A solução já entrega previsões, alertas de monitoramento e registro de decisões; falta o painel para gestores.
 
-Por fim, ao simular a chegada de dados novos com as internações de 2026, o primeiro ciclo de monitoramento encontrou três pontos que precisam de atenção antes de qualquer uso real:
+Por fim, ao simular a chegada de dados novos com as internações de 2026, o primeiro ciclo de monitoramento encontrou quatro pontos que precisam de atenção antes de qualquer uso real:
 
 - os três meses mais recentes chegam incompletos, porque o DATASUS ainda está processando as AIHs, e usá-los sem correção reduziria a previsão em 20% a 36%;
 - no início de 2026, avaliado como seria em operação, o modelo ficou pior que a regra de referência (7,99% contra 6,32% de erro proporcional médio) e subestimou diabetes em 11,72%;
@@ -61,7 +61,7 @@ Para lidar com os riscos encontrados e com o uso da previsão pela gestão, a eq
 
 ## Decisões recentes
 
-- 2026-11-19: a execução entregue na Etapa 3 (`20261105T205507`) foi definida como modelo oficial, mesmo com uma reprodução em outra máquina tendo resultado melhor, para não escolher modelo pelo resultado do teste;
+- 2026-11-19: a execução entregue na Etapa 3 (`20261105T205507`) foi definida como modelo oficial. Uma reprodução em outra máquina teve resultado melhor, mas trocar seria escolher o modelo pelo resultado do teste;
 - 2026-11-19: após o primeiro ciclo de monitoramento, decidiu-se não retreinar ainda, porque há só quatro meses maduros de 2026;
 - 2026-11-23: a Diretoria de Contratualização e Regulação da SESA-PR foi proposta como dona do negócio;
 - 2026-11-24: o teste de 2025 e o primeiro ciclo de monitoramento foram refeitos sem vazamento de dados futuros. O modelo oficial não mudou; mudou a forma de medir o erro, que passou a ser de 7,18% em 2025 e 7,99% no início de 2026. A decisão de não retreinar ainda foi mantida, porque a regra do plano pede três ciclos seguidos em alerta.

@@ -31,7 +31,7 @@ python3 -m venv .venv
 - `tuning.py` leva cerca de 4 minutos e cria uma nova pasta em `results/`.
 - `evaluation.py` avalia a execução mais recente e acrescenta uma linha em `registry.csv`.
 
-Em outro computador, o modelo e o ranking da busca podem variar um pouco (de 5,00% a 5,78% de macro-WAPE em 2025). O modelo oficial é o arquivo versionado, não um retreino; veja [docs/reproducao_etapa3.md](docs/reproducao_etapa3.md).
+Em outro computador, o modelo e o ranking da busca podem variar um pouco (de 5,00% a 5,78% de macro-WAPE em 2025). O modelo oficial é o arquivo versionado, não um retreino; veja a seção "Variação entre máquinas" do [Model Card](../entrega-etapa4/model-card.md#variação-entre-máquinas).
 
 ### Sem baixar os arquivos brutos
 
